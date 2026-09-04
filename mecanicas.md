@@ -59,30 +59,52 @@ El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros p
 ## 4. Habilidad Definitiva del Héroe (*Ultimate: Nova Arcana*)
 
 1. **Carga por Eliminaciones:** Cada enemigo derrotado suma un punto al contador de la habilidad definitiva (hasta un máximo de **20 bajas**).
-2. **Botón Táctil de Activación:** Al alcanzar las 20 eliminaciones, el botón de la definitiva en el HUD se ilumina con una animación de pulso cian radiante (`¡NOVA!`).
+2. **Botón Táctil de Activación:**
+   - Ubicado dinámicamente en la esquina opuesta al joystick virtual (inferior derecha para diestros, inferior izquierda para zurdos).
+   - Mientras carga, muestra un medidor circular con la cuenta regresiva (`X/20`).
+   - Al alcanzar las 20 eliminaciones, el botón se ilumina con una animación de pulso cian radiante (`¡NOVA!`).
 3. **Efecto de la Habilidad:**
-   - Desata una descarga masiva de **18 proyectiles perforantes en 360 grados** (`damage x 2.5`).
+   - Desata una descarga masiva de **18 proyectiles perforantes en 360 grados** (`daño x 2.5`).
    - Genera una **onda de choque de repulsión** que empuja a todos los enemigos cercanos 90 píxeles hacia atrás y les inflige daño masivo de área.
+   - Reproduce el efecto sonoro nativo sintetizado `ultimate.wav`.
    - El contador se reinicia a cero tras su uso, requiriendo otras 20 bajas para recargarse.
 
 ---
 
-## 5. El Escenario: La Mazmorra Arcana
-- **Arena de Combate:** Área de **1600 x 1600 píxeles** con baldosas de piedra desgastada en alta definición.
-- **Sello Arcano Sangriento Central:** Un círculo ceremonial rúnico ancestral de 440 px de diámetro en el corazón de la mazmorra con inscripciones prohibidas y salpicaduras de sangre antiguas.
-- **Murallas de Contención:** Paredes de fortaleza perimetral con runas incandescentes de fuego que delimitan la zona segura.
+## 5. Cronograma de Oleadas y Aparición de Enemigos
+
+Cada oleada de la mazmorra dura exactamente **45 segundos** de tiempo real:
+
+| Oleada | Tiempo de Partida | Enemigos en Combate | Comportamiento y Retos |
+|---|:---:|---|---|
+| **Oleada 1** | `00:00 - 00:45` | Murciélagos espectrales y Esqueletos | Fase de aclimatación. Recolección de gemas iniciales para los primeros 2 niveles. |
+| **Oleada 2** | `00:45 - 01:30` | Murciélagos, Esqueletos y primeros Brutos | Aumenta la densidad de aparición y el primer minijefe resistente. |
+| **Oleada 3** 🔥 | **`01:30` (Minuto 1:30)** | **Aparición de Magos Cultistas y Duendes Bomba** | Se desbloquean los ataques a distancia y los enemigos suicidas explosivos. Representan ~40% de los spawns. |
+| **Oleada 4** | `02:15 - 03:00` | Asedio combinado con alta densidad | Obliga al jugador a priorizar objetivos (eliminar magos o detonar duendes lejos). |
+| **Oleada 5** 👑 | **`03:00` (Minuto 3:00)** | **Aparición de Lord Malakor (Jefe)** | Rugido de advertencia (`boss_roar.wav`), barra de salud superior en el HUD y ráfagas triples de fuego. |
+| **Oleadas 6-9** | `03:45 - 06:45` | Escalado de dificultad continuo (`+18% HP/daño` por oleada) | Máxima intensidad con hordas veloces de cultistas y bombarderos. |
+| **Oleada 10** 💀 | **`06:45` (Minuto 6:45)** | **Lord Malakor Enfurecido** | Multiplicador de 1.5x en estadísticas, velocidad incrementada y recompensa titánica. |
 
 ---
 
-## 4. Botín, Gemas y Magnetismo
+## 6. El Escenario: La Mazmorra Arcana
 
-Al morir cualquier enemigo, no solo desaparece de pantalla sino que deja caer recursos físicos en el suelo de la mazmorra:
+- **Arena de Combate:** Área delimitada de **1600 x 1600 píxeles** con losas de piedra milenaria en alta definición (`dungeon_floor.png`).
+- **Sello Arcano Sangriento Central:** En el centro exacto de la mazmorra reposa un círculo ceremonial de 440 px (`arcane_blood_circle.png`) con runas incandescentes cian/carmesí, pentagrama oscuro y salpicaduras de sangre ancestral.
+- **Rendimiento Cero Coste (GPU Caching):** El mapa y el sello se pre-graban en memoria GPU mediante `ui.PictureRecorder` en [`DungeonMapComponent`](file:///c:/Users/Javi/AndroidStudioProjects/Juego/lib/game/components/dungeon_map_component.dart), consumiendo **0 ms en cada fotograma**.
+- **Murallas de Contención:** Paredes de fortaleza perimetral con barreras rúnicas luminosas que delimitan la zona segura.
+
+---
+
+## 7. Botín, Gemas y Magnetismo
+
+Al morir cualquier enemigo, deja caer recursos físicos en el suelo de la mazmorra:
 
 1. **Gemas Verdes (Experiencia):**
    - Siempre caen al derrotar a un enemigo.
-   - Otorgan la cantidad de EXP asociada al tipo de monstruo.
+   - Otorgan la cantidad de EXP asociada al tipo de monstruo (15 a 100 EXP).
 2. **Monedas de Oro (Moneda Permanente):**
-   - Tienen probabilidad de caer según el enemigo (25% murciélago, 50% esqueleto, 90% bruto).
+   - Tienen probabilidad de caer según el enemigo (25% murciélago, 50% esqueleto, 90% bruto, 100% jefe).
    - Valen 5 de oro cada una.
 3. **Física del Imán (*Magnet Radius*):**
    - El jugador posee un radio magnético base de **120 píxeles** (ampliable mediante mejoras).
@@ -90,7 +112,7 @@ Al morir cualquier enemigo, no solo desaparece de pantalla sino que deja caer re
 
 ---
 
-## 5. Subida de Nivel y Bendiciones (*In-Run Upgrades*)
+## 8. Subida de Nivel y Bendiciones (*In-Run Upgrades*)
 
 Al recolectar suficientes gemas de EXP para llenar la barra superior:
 1. El motor del juego **se pausa de forma instantánea**.
@@ -108,7 +130,7 @@ Al recolectar suficientes gemas de EXP para llenar la barra superior:
 
 ---
 
-## 6. Economía y Taller de Mejoras Permanentes (*Meta-Progression*)
+## 9. Economía y Taller de Mejoras Permanentes (*Meta-Progression*)
 
 A diferencia de las bendiciones temporales de la partida, el oro acumulado **se guarda en la base de datos local SQLite** al morir o terminar la expedición:
 
@@ -122,8 +144,17 @@ A diferencia de las bendiciones temporales de la partida, el oro acumulado **se 
 
 ---
 
-## 7. Base de Datos Local y Salón de Récords
+## 10. Sistema de Audio y Optimización de Rendimiento
+
+1. **Gestión de Memoria con `AudioPool`:**
+   - Todos los efectos de sonido (`hit.wav`, `shoot.wav`, `gem.wav`, `levelup.wav`, `ultimate.wav`, `explosion.wav`, `enemy_shoot.wav`, `boss_roar.wav`) utilizan instancias pre-alocadas de `AudioPool` en [`AudioManager`](file:///c:/Users/Javi/AndroidStudioProjects/Juego/lib/core/audio_manager.dart).
+   - Esto evita la saturación de descriptores nativos en Android y previene pausas del recolector de basura (*GC pauses*), permitiendo 60/120 FPS estables.
+2. **Frecuencias de Muestreo Nativas:** Audio en formato WAV PCM a 22,050 Hz de baja latencia.
+
+---
+
+## 11. Base de Datos Local y Salón de Récords
 
 - **Arquitectura:** SQLite relacional embebido mediante **Drift** (`sqlite3_flutter_libs`), operando en un hilo de fondo dedicado.
 - **Rendimiento:** 0 operaciones de I/O en disco durante el combate activo a 60 FPS; todas las transacciones de guardado se ejecutan de manera asíncrona al terminar la partida.
-- **Salón de Récords:** Ordena las 10 mejores expediciones registradas según la puntuación obtenida, registrando también el tiempo sobrevivido, el total de monstruos eliminados y el oro saqueado.
+- **Salón de Récords:** Registra las 10 mejores expediciones ordenadas por puntuación, incluyendo oleada alcanzada, enemigos eliminados y oro acumulado.

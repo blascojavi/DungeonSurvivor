@@ -4,38 +4,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shadow Vault | Roguelite Survivor 2D para Móvil</title>
-  <meta name="description" content="Shadow Vault es un videojuego Roguelite de acción y supervivencia 2D para Android e iPhone. 100% Offline con base de datos local SQLite y controles adaptables para diestros y zurdos.">
+  <meta name="description" content="Shadow Vault es un videojuego Roguelite de supervivencia 2D para Android e iPhone. 100% Offline con SQLite local, 60/120 FPS, jefes épicos y controles ergonómicos adaptables.">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="web/favicon.png">
+  <link rel="icon" type="image/png" href="assets/images/app_icon.png">
 
-  <!-- Fuentes de Google: Cinzel & Outfit -->
+  <!-- Google Fonts: Cinzel & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --bg-dark: #07090F;
-      --bg-card: rgba(20, 26, 42, 0.7);
-      --bg-card-hover: rgba(28, 38, 62, 0.85);
-      --border-color: rgba(0, 229, 255, 0.25);
-      --border-glow: rgba(0, 229, 255, 0.6);
+      --bg-card: rgba(18, 24, 38, 0.75);
+      --bg-card-hover: rgba(26, 36, 58, 0.9);
+      --border-color: rgba(0, 229, 255, 0.2);
+      --border-glow: rgba(0, 229, 255, 0.55);
       --primary: #2979FF;
       --secondary: #00E5FF;
       --accent-gold: #FFD700;
-      --accent-red: #FF2A4B;
+      --accent-red: #FF1744;
+      --accent-purple: #9D4EDD;
       --accent-green: #00FF88;
       --text-main: #FFFFFF;
-      --text-muted: #A0AEC0;
+      --text-muted: #94A3B8;
       --font-title: 'Cinzel', serif;
       --font-body: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -45,13 +51,20 @@
       line-height: 1.6;
       overflow-x: hidden;
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(41, 121, 255, 0.15), transparent 60%),
-        radial-gradient(circle at 10% 40%, rgba(0, 229, 255, 0.08), transparent 40%),
-        radial-gradient(circle at 90% 70%, rgba(255, 42, 75, 0.08), transparent 50%);
+        radial-gradient(circle at 50% 0%, rgba(41, 121, 255, 0.18), transparent 50%),
+        radial-gradient(circle at 15% 35%, rgba(0, 229, 255, 0.08), transparent 45%),
+        radial-gradient(circle at 85% 65%, rgba(255, 23, 68, 0.09), transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(157, 78, 221, 0.1), transparent 50%);
       background-attachment: fixed;
     }
 
-    /* CONTENEDOR */
+    .pixel-art {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -60,21 +73,22 @@
 
     /* HEADER & NAV */
     header {
-      padding: 24px 0;
+      padding: 20px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       position: sticky;
       top: 0;
       z-index: 100;
+      background: rgba(7, 9, 15, 0.85);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       text-decoration: none;
       color: var(--text-main);
     }
@@ -82,15 +96,16 @@
     .brand img {
       width: 44px;
       height: 44px;
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow: 0 0 16px var(--border-glow);
+      border: 1px solid var(--border-color);
     }
 
     .brand-title {
       font-family: var(--font-title);
       font-weight: 800;
-      font-size: 1.3rem;
-      letter-spacing: 1.5px;
+      font-size: 1.35rem;
+      letter-spacing: 2px;
       background: linear-gradient(135deg, #fff 40%, var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -99,7 +114,7 @@
     nav {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 22px;
     }
 
     nav a {
@@ -115,22 +130,23 @@
     }
 
     .btn-nav {
-      padding: 8px 18px;
-      border-radius: 8px;
+      padding: 9px 20px;
+      border-radius: 10px;
       background: rgba(41, 121, 255, 0.2);
       border: 1px solid var(--primary);
       color: #fff !important;
       font-weight: 600;
+      transition: all 0.3s ease;
     }
 
     .btn-nav:hover {
       background: var(--primary);
-      box-shadow: 0 0 15px rgba(41, 121, 255, 0.5);
+      box-shadow: 0 0 18px rgba(41, 121, 255, 0.5);
     }
 
     /* HERO SECTION */
     .hero {
-      padding: 80px 0 60px;
+      padding: 85px 0 65px;
       text-align: center;
       position: relative;
     }
@@ -139,57 +155,63 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 16px;
+      padding: 7px 18px;
       border-radius: 20px;
       background: rgba(0, 229, 255, 0.1);
       border: 1px solid var(--border-color);
       color: var(--secondary);
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 1.5px;
-      margin-bottom: 24px;
+      margin-bottom: 26px;
       text-transform: uppercase;
-      box-shadow: 0 0 15px rgba(0, 229, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.18);
+    }
+
+    .hero-icon-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 28px;
     }
 
     .hero-icon {
-      width: 140px;
-      height: 140px;
-      margin: 0 auto 28px;
-      border-radius: 30px;
+      width: 145px;
+      height: 145px;
+      border-radius: 32px;
       display: block;
       box-shadow: 
-        0 0 40px rgba(0, 229, 255, 0.35),
-        0 0 80px rgba(41, 121, 255, 0.2);
+        0 0 40px rgba(0, 229, 255, 0.4),
+        0 0 80px rgba(41, 121, 255, 0.25);
       border: 2px solid var(--border-color);
       transition: transform 0.4s ease, box-shadow 0.4s ease;
     }
 
     .hero-icon:hover {
-      transform: translateY(-6px) scale(1.03);
+      transform: translateY(-6px) scale(1.04);
       box-shadow: 
-        0 0 50px rgba(0, 229, 255, 0.5),
-        0 0 100px rgba(41, 121, 255, 0.3);
+        0 0 55px rgba(0, 229, 255, 0.6),
+        0 0 100px rgba(41, 121, 255, 0.4);
     }
 
     h1 {
       font-family: var(--font-title);
-      font-size: 3.6rem;
+      font-size: 3.8rem;
       font-weight: 900;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       margin-bottom: 16px;
-      background: linear-gradient(180deg, #FFFFFF 20%, #B0C4DE 70%, var(--secondary) 100%);
+      background: linear-gradient(180deg, #FFFFFF 25%, #CBD5E1 70%, var(--secondary) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 0 10px 30px rgba(41, 121, 255, 0.3);
+      text-shadow: 0 10px 35px rgba(41, 121, 255, 0.35);
     }
 
     .hero-subtitle {
       font-size: 1.25rem;
       color: var(--text-muted);
-      max-width: 680px;
-      margin: 0 auto 40px;
+      max-width: 720px;
+      margin: 0 auto 42px;
       font-weight: 300;
+      line-height: 1.7;
     }
 
     .hero-actions {
@@ -206,19 +228,19 @@
       gap: 10px;
       background: linear-gradient(135deg, var(--primary), #1565C0);
       color: #fff;
-      padding: 16px 32px;
-      border-radius: 12px;
-      font-size: 1.05rem;
+      padding: 16px 34px;
+      border-radius: 14px;
+      font-size: 1.1rem;
       font-weight: 700;
       text-decoration: none;
       border: 1px solid var(--secondary);
-      box-shadow: 0 4px 20px rgba(41, 121, 255, 0.4);
+      box-shadow: 0 4px 22px rgba(41, 121, 255, 0.45);
       transition: all 0.3s ease;
     }
 
     .btn-primary:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 30px rgba(0, 229, 255, 0.5);
+      box-shadow: 0 8px 32px rgba(0, 229, 255, 0.55);
       filter: brightness(1.1);
     }
 
@@ -226,10 +248,10 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: rgba(22, 30, 46, 0.8);
+      background: rgba(22, 30, 48, 0.85);
       color: var(--secondary);
-      padding: 16px 28px;
-      border-radius: 12px;
+      padding: 16px 30px;
+      border-radius: 14px;
       font-size: 1.05rem;
       font-weight: 600;
       text-decoration: none;
@@ -238,33 +260,132 @@
     }
 
     .btn-secondary:hover {
-      background: rgba(30, 42, 66, 0.95);
+      background: rgba(30, 42, 68, 0.95);
       border-color: var(--secondary);
       color: #fff;
       transform: translateY(-2px);
     }
 
-    /* GRID DE CARACTERÍSTICAS */
-    .features {
-      padding: 60px 0;
+    /* BADGES BAR */
+    .hero-specs {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .spec-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* SECTIONS COMMON */
+    section {
+      padding: 70px 0;
     }
 
     .section-title {
       text-align: center;
       font-family: var(--font-title);
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       margin-bottom: 12px;
-      letter-spacing: 2px;
+      letter-spacing: 2.5px;
     }
 
     .section-desc {
       text-align: center;
       color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto 48px;
+      max-width: 650px;
+      margin: 0 auto 50px;
       font-size: 1.05rem;
     }
 
+    /* FEATURE SHOWCASE DUAL CARD */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 50px;
+    }
+
+    .showcase-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px 28px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .showcase-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+      transform: translateY(-4px);
+    }
+
+    .showcase-circle-img {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 24px;
+      box-shadow: 0 0 35px rgba(255, 23, 68, 0.45);
+      border: 2px solid rgba(255, 23, 68, 0.4);
+      animation: slowSpin 60s linear infinite;
+    }
+
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .showcase-nova-badge {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.3), rgba(41, 121, 255, 0.15));
+      border: 3px solid var(--secondary);
+      box-shadow: 0 0 35px rgba(0, 229, 255, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      animation: pulseNova 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseNova {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(0, 229, 255, 0.4); }
+      50% { transform: scale(1.06); box-shadow: 0 0 45px rgba(0, 229, 255, 0.8); }
+    }
+
+    .showcase-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .showcase-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* GRID DE CARACTERÍSTICAS */
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -275,23 +396,10 @@
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 32px 24px;
+      padding: 30px 24px;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
       position: relative;
-      overflow: hidden;
-    }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--secondary), transparent);
-      opacity: 0;
-      transition: opacity 0.3s ease;
     }
 
     .feature-card:hover {
@@ -299,10 +407,6 @@
       border-color: var(--border-glow);
       transform: translateY(-5px);
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .feature-card:hover::before {
-      opacity: 1;
     }
 
     .feature-icon {
@@ -324,98 +428,330 @@
       line-height: 1.5;
     }
 
-    /* SECCIÓN ZURDO Y DIESTRO */
+    /* CRONOGRAMA DE OLEADAS INTERACTIVO */
+    .timeline-container {
+      background: rgba(18, 24, 38, 0.75);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px 30px;
+      margin-top: 30px;
+    }
+
+    .timeline-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 28px;
+    }
+
+    .timeline-step {
+      flex: 1;
+      min-width: 130px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+
+    .timeline-step:hover, .timeline-step.active {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--secondary);
+      box-shadow: 0 0 18px rgba(0, 229, 255, 0.3);
+    }
+
+    .timeline-step .wave-num {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+    }
+
+    .timeline-step .wave-time {
+      font-size: 0.85rem;
+      color: var(--secondary);
+      font-family: var(--font-mono);
+      margin-top: 4px;
+    }
+
+    .timeline-detail {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      background: rgba(12, 16, 26, 0.8);
+      border-radius: 16px;
+      padding: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .timeline-detail-img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 14px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .timeline-detail-content h4 {
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      color: var(--secondary);
+      font-family: var(--font-title);
+    }
+
+    .timeline-detail-content p {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .timeline-detail-badge {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 10px;
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--accent-gold);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    /* BESTIARIO CON SPRITES REALES */
+    .bestiary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      margin-top: 30px;
+    }
+
+    .enemy-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .enemy-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border-color: var(--border-glow);
+    }
+
+    .enemy-sprite-container {
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .enemy-sprite-container img {
+      max-width: 72px;
+      max-height: 72px;
+      object-fit: contain;
+    }
+
+    .enemy-card h4 {
+      margin-bottom: 6px;
+      font-size: 1.15rem;
+      font-family: var(--font-title);
+    }
+
+    .enemy-badge {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .enemy-stats {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #A0AEC0;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .enemy-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ERGONOMÍA (INTERACTIVA CON SIMULADOR) */
     .ergonomics {
-      padding: 60px 0;
-      background: rgba(16, 22, 36, 0.5);
+      padding: 65px 0;
+      background: rgba(16, 22, 36, 0.6);
       border-radius: 24px;
       border: 1px solid var(--border-color);
       margin: 40px 0;
       text-align: center;
     }
 
-    .ergo-badge {
-      display: inline-block;
-      padding: 4px 14px;
-      background: rgba(255, 215, 0, 0.15);
-      border: 1px solid rgba(255, 215, 0, 0.4);
-      color: var(--accent-gold);
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .ergo-preview {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin-top: 36px;
-      flex-wrap: wrap;
-    }
-
-    .ergo-box {
-      background: rgba(26, 34, 52, 0.7);
+    .ergo-switch {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 24px;
-      width: 280px;
-      text-align: center;
+      border-radius: 30px;
+      padding: 5px;
+      margin: 20px 0 35px;
     }
 
-    .ergo-box.active {
-      border-color: var(--secondary);
-      box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    .ergo-btn {
+      padding: 10px 24px;
+      border-radius: 25px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
     }
 
-    .ergo-box h4 {
-      color: var(--secondary);
-      margin-bottom: 8px;
-      font-size: 1.1rem;
+    .ergo-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(41, 121, 255, 0.5);
     }
 
-    /* BESTIARIO Y MECÁNICAS PREVIEW */
-    .bestiary-grid {
+    .phone-mockup {
+      width: 320px;
+      height: 200px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      margin: 0 auto;
+      background: #030508;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-joystick {
+      position: absolute;
+      bottom: 25px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.4), rgba(41, 121, 255, 0.2));
+      border: 2px solid var(--secondary);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .phone-nova {
+      position: absolute;
+      bottom: 25px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 23, 68, 0.4), rgba(157, 78, 221, 0.3));
+      border: 2px solid var(--accent-red);
+      box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .mockup-hero {
+      width: 32px;
+      height: 32px;
+    }
+
+    /* SOUNDBOARD WEB AUDIO */
+    .soundboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
       margin-top: 30px;
     }
 
-    .enemy-card {
-      background: rgba(18, 24, 38, 0.8);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      text-align: center;
+    .sound-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
     }
 
-    .enemy-card h4 {
-      margin: 10px 0 6px;
-      font-size: 1.1rem;
+    .sound-btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--secondary);
+      transform: scale(1.04);
+      box-shadow: 0 6px 20px rgba(0, 229, 255, 0.25);
     }
 
-    .enemy-card p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    .sound-btn:active {
+      transform: scale(0.96);
+    }
+
+    .sound-icon {
+      font-size: 1.8rem;
     }
 
     /* FOOTER */
     footer {
-      padding: 50px 0 30px;
+      padding: 60px 0 35px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.92rem;
+      background: rgba(4, 6, 11, 0.95);
     }
 
     .footer-links {
       display: flex;
       justify-content: center;
-      gap: 24px;
-      margin-bottom: 24px;
+      gap: 26px;
+      margin-bottom: 26px;
       flex-wrap: wrap;
     }
 
@@ -423,6 +759,7 @@
       color: var(--text-muted);
       text-decoration: none;
       transition: color 0.2s;
+      font-weight: 500;
     }
 
     .footer-links a:hover {
@@ -430,9 +767,10 @@
     }
 
     @media (max-width: 768px) {
-      h1 { font-size: 2.4rem; }
+      h1 { font-size: 2.5rem; letter-spacing: 2px; }
       .hero-subtitle { font-size: 1.05rem; }
       header { flex-direction: column; gap: 16px; }
+      .timeline-detail { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
@@ -446,10 +784,12 @@
         <span class="brand-title">SHADOW VAULT</span>
       </a>
       <nav>
-        <a href="#caracteristicas">Características</a>
-        <a href="#mecanicas">Mecánicas</a>
+        <a href="#caracteristicas">Novedades</a>
+        <a href="#cronograma">Oleadas</a>
+        <a href="#bestiario">Bestiario</a>
         <a href="#ergonomia">Controles</a>
-        <a href="mecanicas.md" class="btn-nav">Documentación</a>
+        <a href="#sonidos">Audio FX</a>
+        <a href="mecanicas.md" class="btn-nav">Mecánicas .MD</a>
       </nav>
     </div>
   </header>
@@ -457,144 +797,304 @@
   <!-- HERO SECTION -->
   <section class="hero">
     <div class="container">
-      <div class="badge-top">⭐ Videojuego Roguelite 2D Móvil</div>
-      <img src="assets/images/app_icon.png" alt="Icono de Shadow Vault" class="hero-icon">
+      <div class="badge-top">⭐ Videojuego Roguelite 2D Móvil · 100% Offline</div>
+      <div class="hero-icon-wrapper">
+        <img src="assets/images/app_icon.png" alt="Icono de Shadow Vault" class="hero-icon">
+      </div>
       <h1>SHADOW VAULT</h1>
       <p class="hero-subtitle">
-        Sobrevive a implacables hordas de criaturas espectrales en las profundidades de la mazmorra. 
-        Combate automático fluido a 60 FPS, progresión permanente y <strong>100% Offline con SQLite local</strong>.
+        Sobrevive a implacables hordas de criaturas espectrales en una mazmorra arcana de piedra. 
+        Combate automático fluido a <strong>60/120 FPS</strong>, habilidad definitiva <strong>Nova Arcana</strong>, 
+        nuevos enemigos a distancia y <strong>Lord Malakor</strong> esperando en las profundidades.
       </p>
 
       <div class="hero-actions">
         <a href="build/app/outputs/flutter-apk/app-debug.apk" download class="btn-primary">
           <span>📥</span> Descargar APK (Android)
         </a>
-        <a href="mecanicas.md" class="btn-secondary">
-          <span>📜</span> Ver Guía de Mecánicas
+        <a href="#cronograma" class="btn-secondary">
+          <span>⏱️</span> Ver Oleadas & Jefes
         </a>
+        <a href="mecanicas.md" class="btn-secondary">
+          <span>📜</span> Manual Completo
+        </a>
+      </div>
+
+      <div class="hero-specs">
+        <div class="spec-item"><span>🚀</span> Flutter 3.47 + Flame Engine</div>
+        <div class="spec-item"><span>💾</span> SQLite Nativo (Drift) Cero Lag</div>
+        <div class="spec-item"><span>🎮</span> 60 / 120 FPS Verificado</div>
+        <div class="spec-item"><span>✋</span> Ergonomía Diestro & Zurdo</div>
       </div>
     </div>
   </section>
 
-  <!-- SECCIÓN CARACTERÍSTICAS -->
-  <section id="caracteristicas" class="features">
+  <!-- SECCIÓN NOVEDADES: SELLO SANGRIENTO & NOVA ARCANA -->
+  <section id="caracteristicas">
     <div class="container">
-      <h2 class="section-title">CARACTERÍSTICAS PRINCIPALES</h2>
-      <p class="section-desc">Diseñado desde cero para partidas dinámicas de 3 a 8 minutos con máxima fluidez.</p>
+      <h2 class="section-title">NUEVAS CARACTERÍSTICAS & PODER ARCANO</h2>
+      <p class="section-desc">Grandes incorporaciones visuales y de combate para transformar cada partida.</p>
 
+      <div class="showcase-grid">
+        <!-- Tarjeta Sello Arcano Sangriento -->
+        <div class="showcase-card">
+          <img src="assets/images/arcane_blood_circle.png" alt="Sello Arcano Sangriento" class="showcase-circle-img pixel-art">
+          <h3 style="color: #FF2A4B; font-family: var(--font-title);">Sello Arcano Sangriento</h3>
+          <p>
+            El centro de la mazmorra ahora alberga un sobrecogedor círculo ceremonial rúnico ancestral grabado en la piedra con pentagrama, 
+            runas arcanas vivas y salpicaduras de sangre. Pre-grabado en memoria GPU con <code>PictureRecorder</code> (<strong>0 ms de sobrecarga</strong>).
+          </p>
+        </div>
+
+        <!-- Tarjeta Nova Arcana -->
+        <div class="showcase-card">
+          <div class="showcase-nova-badge">
+            <span style="font-size: 1.8rem;">⚡</span>
+            <span style="font-family: var(--font-title); font-weight: 800; font-size: 1rem; color: #fff;">¡NOVA!</span>
+          </div>
+          <h3 style="color: var(--secondary); font-family: var(--font-title);">Habilidad Definitiva: Nova Arcana</h3>
+          <p>
+            Acumula <strong>20 bajas enemigas</strong> para energizar tu medidor. Al alcanzar el máximo, el botón del HUD se ilumina con una pulsación cian radiante: 
+            libera <strong>18 proyectiles en 360°</strong> y una onda de choque sónica que empuja a todos los monstruos cercanos.
+          </p>
+        </div>
+      </div>
+
+      <!-- Grid de características clásicas -->
       <div class="feature-grid">
         <div class="feature-card">
           <div class="feature-icon">⚡</div>
-          <h3>Combate Ágil a 60 FPS</h3>
-          <p>Disparo automático inteligente con target por proximidad. Esquiva y muévete mientras tu héroe desata proyectiles mágicos.</p>
+          <h3>Combate Ágil y Fluido</h3>
+          <p>Auto-disparo inteligente con fijación por proximidad (radio de 450 px). Muévete y esquiva libremente mientras tu magia aniquila enemigos.</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🧲</div>
           <h3>Absorción Magnética</h3>
-          <p>Recolecta gemas de experiencia y monedas de oro. Un imán físico acelera los tesoros hacia tu héroe en plena batalla.</p>
+          <p>Gemas de experiencia y monedas de oro físicas que aceleran suavemente hacia el héroe gracias a un imán físico configurable.</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🛡️</div>
-          <h3>Taller de Mejoras</h3>
-          <p>Gasta el oro recolectado en mejoras permanentes de Salud Titánica, Fuerza Arcana, Velocidad y Radio de Imán.</p>
+          <h3>Taller de Mejoras Permanentes</h3>
+          <p>Gasta tu oro en la tienda: Salud Titánica, Fuerza Arcana, Velocidad de Carrera y Radio de Atracción Magnética.</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">💾</div>
-          <h3>100% Local (Sin Nube)</h3>
-          <p>Base de datos SQLite nativa embebida (Drift). Cero dependencia de internet, cero servidores externos y privacidad total.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🎮</div>
-          <h3>Modo Diestro y Zurdo</h3>
-          <p>Selector ergonómico en el taller para posicionar el Joystick virtual flotante en la izquierda o en la derecha a tu gusto.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">✨</div>
-          <h3>Habilidad Definitiva: Nova</h3>
-          <p>Acumula 20 bajas enemigas para cargar tu Definitiva. Pulsa el botón reluciente para desatar una onda expansiva de 18 proyectiles en 360°.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">👹</div>
-          <h3>Jefes de Mazmorra Épicos</h3>
-          <p>Enfréntate a Lord Malakor en las oleadas 5 y 10. Esquiva sus ráfagas de orbes ardientes y reclama un festín legendario de gemas y oro.</p>
+          <h3>100% Offline con SQLite</h3>
+          <p>Motor de persistencia Drift embebido en C++. Juega sin conexión en cualquier lugar sin gastar datos y sin cuotas de nube.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECCIÓN ERGONOMÍA (ZURDO / DIESTRO) -->
-  <section id="ergonomia" class="container">
-    <div class="ergonomics">
-      <div class="ergo-badge">Novedad Ergonómica</div>
-      <h2 class="section-title">CONTROL ADAPTABLE</h2>
-      <p class="section-desc" style="margin-bottom: 20px;">
-        Juega cómodamente con una o dos manos. Cambia la posición del Joystick y del botón Definitiva en cualquier momento desde el Taller.
-      </p>
+  <!-- SECCIÓN CRONOGRAMA DE OLEADAS -->
+  <section id="cronograma" style="background: rgba(10, 14, 24, 0.5);">
+    <div class="container">
+      <h2 class="section-title">CRONOGRAMA DE OLEADAS Y RETOS</h2>
+      <p class="section-desc">Cada oleada dura exactamente <strong>45 segundos</strong>. Conoce cuándo se desatan las mayores amenazas.</p>
 
-      <div class="ergo-preview">
-        <div class="ergo-box active">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">✋</div>
-          <h4>Modo Diestro</h4>
-          <p>Joystick en esquina inferior izquierda y botón Definitiva en la derecha para pulsar con el pulgar derecho.</p>
+      <div class="timeline-container">
+        <div class="timeline-nav">
+          <div class="timeline-step" onclick="selectWave(1)">
+            <div class="wave-num">Oleada 1</div>
+            <div class="wave-time">00:00 - 00:45</div>
+          </div>
+          <div class="timeline-step" onclick="selectWave(2)">
+            <div class="wave-num">Oleada 2</div>
+            <div class="wave-time">00:45 - 01:30</div>
+          </div>
+          <div class="timeline-step active" onclick="selectWave(3)">
+            <div class="wave-num">Oleada 3 🔥</div>
+            <div class="wave-time">01:30 - 02:15</div>
+          </div>
+          <div class="timeline-step" onclick="selectWave(5)">
+            <div class="wave-num">Oleada 5 👑</div>
+            <div class="wave-time">03:00 - 03:45</div>
+          </div>
+          <div class="timeline-step" onclick="selectWave(10)">
+            <div class="wave-num">Oleada 10 💀</div>
+            <div class="wave-time">06:45+</div>
+          </div>
         </div>
 
-        <div class="ergo-box active">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">🤚</div>
-          <h4>Modo Zurdo</h4>
-          <p>Joystick en esquina inferior derecha y botón Definitiva en la izquierda para pulsar con el pulgar izquierdo.</p>
+        <div class="timeline-detail" id="timelineDetail">
+          <img src="assets/images/cultist.png" alt="Mago Cultista" class="timeline-detail-img pixel-art" id="detailImg">
+          <div class="timeline-detail-content">
+            <h4 id="detailTitle">Oleada 3: ¡Llegan los Magos Cultistas y Duendes Bomba!</h4>
+            <p id="detailDesc">
+              Al minuto <strong>01:30</strong> se desata el asedio a distancia. Los <strong>Magos Cultistas</strong> disparan orbes mágicos oscuros mientras los <strong>Duendes Bomba</strong> corren a gran velocidad para estallar al morir con daño de área. ¡Esquívalos activamente!
+            </p>
+            <span class="timeline-detail-badge" id="detailBadge">⚠️ Dificultad: Ataques a distancia & Bombas suicidas</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- SECCIÓN BESTIARIO -->
-  <section id="mecanicas" class="features">
+  <section id="bestiario">
     <div class="container">
       <h2 class="section-title">BESTIARIO DE LA MAZMORRA</h2>
-      <p class="section-desc">Monstruos variados con ataques a distancia, detonaciones al morir y jefes colosales.</p>
+      <p class="section-desc">Monstruos de pesadilla con sprites pixel-art originales y comportamientos diferenciados.</p>
 
       <div class="bestiary-grid">
+        <!-- Murciélago -->
         <div class="enemy-card">
-          <div style="font-size: 3rem;">🦇</div>
-          <h4 style="color: #BA68C8;">Murciélago Espectral</h4>
-          <p>Muy veloz y esquivo. Ataca en manada para desbordar tus defensas (20 HP, 100 px/s).</p>
+          <div class="enemy-sprite-container">
+            <img src="assets/images/bat.png" alt="Murciélago Espectral" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(186, 104, 200, 0.15); color: #BA68C8;">Enjambre Rápido</span>
+          <h4>Murciélago Espectral</h4>
+          <div class="enemy-stats">
+            <span>HP: 20</span>
+            <span>VEL: 100 px/s</span>
+            <span>EXP: 15</span>
+          </div>
+          <p>Monstruo ágil y volador que ataca en manadas veloces para intentar acorralarte.</p>
         </div>
 
+        <!-- Esqueleto -->
         <div class="enemy-card">
-          <div style="font-size: 3rem;">💀</div>
-          <h4 style="color: #CFD8DC;">Guerrero Esqueleto</h4>
-          <p>Guerrero equilibrado con ojos dorados. Mayor probabilidad de soltar monedas (45 HP, 65 px/s).</p>
+          <div class="enemy-sprite-container">
+            <img src="assets/images/skeleton.png" alt="Guerrero Esqueleto" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(207, 216, 220, 0.15); color: #CFD8DC;">Equilibrado</span>
+          <h4>Guerrero Esqueleto</h4>
+          <div class="enemy-stats">
+            <span>HP: 45</span>
+            <span>VEL: 65 px/s</span>
+            <span>EXP: 30</span>
+          </div>
+          <p>Soldado no-muerto con ojos dorados incandescentes. Alta probabilidad de soltar monedas de oro (50%).</p>
         </div>
 
+        <!-- Bruto -->
         <div class="enemy-card">
-          <div style="font-size: 3rem;">👹</div>
-          <h4 style="color: #EF5350;">Bruto Demoníaco</h4>
-          <p>Pesado y letal. Resiste ráfagas continuas de disparos y otorga 80 EXP (120 HP, 40 px/s).</p>
+          <div class="enemy-sprite-container">
+            <img src="assets/images/brute.png" alt="Bruto Demoníaco" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(239, 83, 80, 0.15); color: #EF5350;">Tanque Pesado</span>
+          <h4>Bruto Demoníaco</h4>
+          <div class="enemy-stats">
+            <span>HP: 120</span>
+            <span>VEL: 40 px/s</span>
+            <span>EXP: 80</span>
+          </div>
+          <p>Gigante demoníaco resistente a múltiples impactos. Otorga un 90% de probabilidad de botín de oro.</p>
         </div>
 
-        <div class="enemy-card">
-          <div style="font-size: 3rem;">🔮</div>
-          <h4 style="color: #00E5FF;">Mago Cultista (Oleada 3+)</h4>
-          <p>Guarda distancia media y lanza orbes mágicos que debes esquivar para sobrevivir (40 HP, 55 px/s).</p>
+        <!-- Mago Cultista (NUEVO) -->
+        <div class="enemy-card" style="border-color: rgba(0, 229, 255, 0.35);">
+          <div class="enemy-sprite-container">
+            <img src="assets/images/cultist.png" alt="Mago Cultista" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(0, 229, 255, 0.15); color: var(--secondary);">Nuevo (Oleada 3+)</span>
+          <h4>Mago Cultista</h4>
+          <div class="enemy-stats">
+            <span>HP: 40</span>
+            <span>VEL: 55 px/s</span>
+            <span>DISPARO: 2.5s</span>
+          </div>
+          <p>Hechicero encapuchado que guarda distancia media y proyecta orbes de energía oscura hacia tu posición.</p>
         </div>
 
-        <div class="enemy-card">
-          <div style="font-size: 3rem;">💣</div>
-          <h4 style="color: #FF9100;">Duende Bomba (Oleada 3+)</h4>
-          <p>Corre a toda velocidad con una bomba encendida y detona al morir con daño de área (24 HP, 130 px/s).</p>
+        <!-- Duende Bomba (NUEVO) -->
+        <div class="enemy-card" style="border-color: rgba(255, 145, 0, 0.35);">
+          <div class="enemy-sprite-container">
+            <img src="assets/images/bomber.png" alt="Duende Bomba" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(255, 145, 0, 0.15); color: #FF9100;">Nuevo (Oleada 3+)</span>
+          <h4>Duende Bomba</h4>
+          <div class="enemy-stats">
+            <span>HP: 24</span>
+            <span>VEL: 130 px/s</span>
+            <span>EXPLOSIÓN: Área</span>
+          </div>
+          <p>Corre frenéticamente portando una bomba fundida. Al morir, detona en una violenta deflagración ígnea.</p>
         </div>
 
-        <div class="enemy-card" style="border-color: rgba(255, 23, 68, 0.4); background: rgba(36, 12, 18, 0.85);">
-          <div style="font-size: 3rem;">👑</div>
-          <h4 style="color: #FF1744;">Lord Malakor (Jefe Oleadas 5 & 10)</h4>
-          <p>Colosal demonio con cuernos flamígeros. Ráfagas triples de fuego y festín legendario de gemas al morir (480 HP).</p>
+        <!-- Jefe Lord Malakor (NUEVO) -->
+        <div class="enemy-card" style="border-color: rgba(255, 23, 68, 0.5); background: rgba(36, 12, 20, 0.85);">
+          <div class="enemy-sprite-container" style="background: rgba(255, 23, 68, 0.15);">
+            <img src="assets/images/boss.png" alt="Lord Malakor" class="pixel-art">
+          </div>
+          <span class="enemy-badge" style="background: rgba(255, 23, 68, 0.2); color: #FF1744;">Jefe (Oleadas 5 & 10)</span>
+          <h4 style="color: #FF1744;">Lord Malakor</h4>
+          <div class="enemy-stats" style="color: #FF8A80;">
+            <span>HP: 480</span>
+            <span>VEL: 45 px/s</span>
+            <span>EXP: 350+</span>
+          </div>
+          <p>Señor del Abismo con cuernos de fuego. Lanza ráfagas triples de magia y al morir libera un festín legendario.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN ERGONOMÍA (INTERACTIVA) -->
+  <section id="ergonomia" class="container">
+    <div class="ergonomics">
+      <div class="badge-top" style="margin-bottom: 12px;">Comodidad Total de Juego</div>
+      <h2 class="section-title">CONTROL ERGONÓMICO ADAPTABLE</h2>
+      <p class="section-desc" style="margin-bottom: 10px;">
+        Prueba cómo se reorganiza la interfaz en tu móvil según tu mano preferida. Ambos pulgares tienen su espacio natural.
+      </p>
+
+      <div class="ergo-switch">
+        <button class="ergo-btn active" id="btnDiestro" onclick="setMode('diestro')">Modo Diestro</button>
+        <button class="ergo-btn" id="btnZurdo" onclick="setMode('zurdo')">Modo Zurdo</button>
+      </div>
+
+      <!-- Mockup interactivo -->
+      <div class="phone-mockup">
+        <div class="phone-joystick" id="phoneJoystick" style="left: 25px;">JOY</div>
+        <img src="assets/images/hero.png" alt="Héroe" class="mockup-hero pixel-art">
+        <div class="phone-nova" id="phoneNova" style="right: 25px;">NOVA</div>
+      </div>
+      <p id="ergoExplanation" style="margin-top: 18px; font-size: 0.95rem; color: var(--text-muted);">
+        <strong>Modo Diestro:</strong> Mueve el héroe con el pulgar izquierdo y activa la Nova con el pulgar derecho.
+      </p>
+    </div>
+  </section>
+
+  <!-- SECCIÓN SOUNDBOARD AUDIO FX WEB AUDIO -->
+  <section id="sonidos">
+    <div class="container">
+      <h2 class="section-title">SISTEMA DE AUDIO NATIVO</h2>
+      <p class="section-desc">Efectos sintetizados de baja latencia gestionados mediante <code>AudioPool</code>. ¡Pulsa para escucharlos en vivo!</p>
+
+      <div class="soundboard-grid">
+        <button class="sound-btn" onclick="playSfx('shoot')">
+          <span class="sound-icon">🔮</span>
+          <span>Disparo Mágico</span>
+        </button>
+
+        <button class="sound-btn" onclick="playSfx('gem')">
+          <span class="sound-icon">💎</span>
+          <span>Recoger Gema</span>
+        </button>
+
+        <button class="sound-btn" onclick="playSfx('ultimate')">
+          <span class="sound-icon">⚡</span>
+          <span>Nova Arcana</span>
+        </button>
+
+        <button class="sound-btn" onclick="playSfx('explosion')">
+          <span class="sound-icon">💣</span>
+          <span>Deflagración Duende</span>
+        </button>
+
+        <button class="sound-btn" onclick="playSfx('enemy_shoot')">
+          <span class="sound-icon">🔥</span>
+          <span>Orbe Cultista</span>
+        </button>
+
+        <button class="sound-btn" onclick="playSfx('boss')">
+          <span class="sound-icon">👹</span>
+          <span>Rugido Lord Malakor</span>
+        </button>
       </div>
     </div>
   </section>
@@ -603,15 +1103,192 @@
   <footer>
     <div class="container">
       <div class="footer-links">
-        <a href="mecanicas.md">Manual de Mecánicas</a>
-        <a href="juego.md">Documento GDD</a>
-        <a href="notas.md">Notas Técnicas</a>
-        <a href="pasos.md">Guía de Publicación</a>
+        <a href="mecanicas.md">Manual de Mecánicas (.md)</a>
+        <a href="juego.md">Documento de Diseño GDD (.md)</a>
+        <a href="notas.md">Notas Técnicas (.md)</a>
+        <a href="pasos.md">Guía de Compilación (.md)</a>
+        <a href="README.md">README del Repositorio (.md)</a>
       </div>
-      <p>© 2026 Shadow Vault. Desarrollado con Flutter, Flame Engine y SQLite Local.</p>
-      <p style="font-size: 0.8rem; color: #556277; margin-top: 8px;">Listo para alojarse en GitHub Pages.</p>
+      <p>© 2026 Shadow Vault. Desarrollado con Flutter, Flame Engine y SQLite Local (Drift).</p>
+      <p style="font-size: 0.82rem; color: #64748B; margin-top: 10px;">
+        100% Offline · Compatible con Android, iOS y Windows · Sin cuotas de servidores
+      </p>
     </div>
   </footer>
 
+  <!-- SCRIPT INTERACTIVO -->
+  <script>
+    // 1. Selector de Oleadas
+    const waveData = {
+      1: {
+        title: "Oleada 1: El Despertar de la Cripta",
+        desc: "Tiempo: 00:00 a 00:45. Murciélagos espectrales y guerreros esqueleto iniciales. Ideal para ganar los primeros 2 niveles y mejorar el daño.",
+        badge: "🟢 Dificultad: Inicial · Murciélagos & Esqueletos",
+        img: "assets/images/bat.png"
+      },
+      2: {
+        title: "Oleada 2: La Horda se Agrupa",
+        desc: "Tiempo: 00:45 a 01:30. Aparecen los primeros Brutos Demoníacos resistentes. La densidad de esqueletos aumenta.",
+        badge: "🟡 Dificultad: Moderada · Primeros Brutos Tanque",
+        img: "assets/images/brute.png"
+      },
+      3: {
+        title: "Oleada 3: ¡Llegan los Magos Cultistas y Duendes Bomba!",
+        desc: "Tiempo: 01:30 a 02:15. Se desbloquean los ataques a distancia y los kamikazes. Los Cultistas lanzan orbes oscuros y los Duendes detonan al morir.",
+        badge: "⚠️ Dificultad: Ataques a distancia & Bombas suicidas",
+        img: "assets/images/cultist.png"
+      },
+      5: {
+        title: "Oleada 5: ¡Aparición del Jefe Lord Malakor!",
+        desc: "Tiempo: 03:00 a 03:45. Resuena el rugido del abismo y aparece la barra de salud superior. Dispara ráfagas triples de fuego. ¡Suelta 400 EXP y oro legendario!",
+        badge: "👑 JEFE DE MAZMORRA · Lord Malakor (480 HP)",
+        img: "assets/images/boss.png"
+      },
+      10: {
+        title: "Oleada 10: Lord Malakor Enfurecido",
+        desc: "Tiempo: 06:45+. Segunda llegada del Jefe con +50% de velocidad y daño aumentado. El reto supremo de supervivencia.",
+        badge: "💀 RETO SUPREMO · Lord Malakor Enfurecido",
+        img: "assets/images/boss.png"
+      }
+    };
+
+    function selectWave(num) {
+      document.querySelectorAll('.timeline-step').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      const data = waveData[num];
+      document.getElementById('detailTitle').textContent = data.title;
+      document.getElementById('detailDesc').innerHTML = data.desc;
+      document.getElementById('detailBadge').textContent = data.badge;
+      document.getElementById('detailImg').src = data.img;
+    }
+
+    // 2. Modo Diestro / Zurdo
+    function setMode(mode) {
+      const joy = document.getElementById('phoneJoystick');
+      const nova = document.getElementById('phoneNova');
+      const exp = document.getElementById('ergoExplanation');
+      const btnD = document.getElementById('btnDiestro');
+      const btnZ = document.getElementById('btnZurdo');
+
+      if (mode === 'diestro') {
+        joy.style.left = '25px';
+        joy.style.right = 'auto';
+        nova.style.right = '25px';
+        nova.style.left = 'auto';
+        btnD.classList.add('active');
+        btnZ.classList.remove('active');
+        exp.innerHTML = "<strong>Modo Diestro:</strong> Mueve el héroe con el pulgar izquierdo y activa la Nova con el pulgar derecho.";
+      } else {
+        joy.style.right = '25px';
+        joy.style.left = 'auto';
+        nova.style.left = '25px';
+        nova.style.right = 'auto';
+        btnZ.classList.add('active');
+        btnD.classList.remove('active');
+        exp.innerHTML = "<strong>Modo Zurdo:</strong> Mueve el héroe con el pulgar derecho y activa la Nova con el pulgar izquierdo.";
+      }
+    }
+
+    // 3. Sintetizador de Efectos de Sonido con Web Audio API
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSfx(type) {
+      initAudio();
+      const now = audioCtx.currentTime;
+
+      if (type === 'shoot') {
+        // Disparo mágico ascendente rápido
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'gem') {
+        // Campanilla brillante de gema
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1050, now);
+        osc.frequency.exponentialRampToValueAtTime(1600, now + 0.15);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'ultimate') {
+        // Nova sónica masiva
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(700, now + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.5);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.55);
+      } else if (type === 'explosion') {
+        // Ruido bajo simulando explosión
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'enemy_shoot') {
+        // Disparo oscuro
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.18);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === 'boss') {
+        // Rugido gutural
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(90, now);
+        osc.frequency.linearRampToValueAtTime(140, now + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.65);
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.65);
+      }
+    }
+  </script>
 </body>
 </html>

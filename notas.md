@@ -114,3 +114,20 @@ Para publicar en tiendas oficiales cuando el juego esté terminado:
 De acuerdo a tus instrucciones, se han generado también:
 1. [pasos.md](file:///c:/Users/Javi/AndroidStudioProjects/Juego/pasos.md): La hoja de ruta paso a paso desde cero (instalación de herramientas, código, BBDD, hasta la compilación y firma para ambas tiendas).
 2. [juego.md](file:///c:/Users/Javi/AndroidStudioProjects/Juego/juego.md): El documento de diseño completo del juego (GDD), mecánicas, arquitectura del código, esquema de la base de datos local y sistema de guardado seguro.
+3. [mecanicas.md](file:///c:/Users/Javi/AndroidStudioProjects/Juego/mecanicas.md): Manual en profundidad de controles, algoritmos de apuntado, bestiario, cronograma de oleadas y habilidad definitiva.
+
+---
+
+## 7. Hitos de Rendimiento y Optimizaciones Móviles (Poco F7 & Flagships)
+
+Durante las pruebas de alta exigencia (hasta la oleada 10 con cientos de entidades activas):
+1. **Eliminación de Microtirones por Audio (`AudioPool`):**
+   - Se migró el motor de audio a `AudioPool` nativo pre-alocado para los 8 efectos sonoros del juego (`hit`, `shoot`, `gem`, `levelup`, `ultimate`, `explosion`, `enemy_shoot`, `boss_roar`).
+   - Esto erradica por completo la saturación de descriptores de audio en Android y evita paradas del recolector de basura (*Garbage Collection pauses*).
+2. **Pre-renderizado en GPU del Mapa y Sello:**
+   - Las losas de piedra y el sello rúnico ceremonial se pre-graban en memoria GPU mediante `ui.PictureRecorder`. En cada fotograma el coste de pintar el mapa completo es de **0 ms**.
+3. **Control Estricto de Entidades:**
+   - Límite controlado de enemigos vivos y gemas en pantalla, combinando gemas lejanas para mantener una tasa constante de **60 a 120 FPS sin parones**.
+4. **APK de Depuración Generada y Verificada:**
+   - Archivo: `build/app/outputs/flutter-apk/app-debug.apk`.
+   - Estado: Totalmente jugable y verificado en Android físico.

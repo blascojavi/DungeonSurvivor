@@ -1,4 +1,4 @@
-# DISEÑO Y ARQUITECTURA DEL JUEGO: *DUNGEON SURVIVOR*
+# DISEÑO Y ARQUITECTURA DEL JUEGO: *SHADOW VAULT*
 
 Documento de Diseño del Juego (GDD) y especificación técnica de la arquitectura, mecánicas, base de datos local y sistema de guardado.
 
@@ -7,11 +7,12 @@ Documento de Diseño del Juego (GDD) y especificación técnica de la arquitectu
 ## 1. Concepto General del Juego
 
 ### 1.1. Género y Premisa
+- **Título:** **Shadow Vault** (anteriormente *Dungeon Survivor*).
 - **Género:** Roguelite de Acción y Supervivencia 2D (*Survivor / Dungeon Crawler*).
 - **Estilo de Sesión:** Partidas rápidas y dinámicas de **3 a 10 minutos**, perfectamente adaptadas para dispositivos móviles.
 - **Orientación:** Vertical (*Portrait*), permitiendo jugar cómodamente con una sola mano, o con opción de soporte horizontal (*Landscape*).
-- **Control:** Palanca virtual dinámica (*Dynamic Virtual Joystick*) que aparece donde el usuario toca con el pulgar.
-- **Estilo Visual:** 2D vibrante con *pixel art* o arte vectorial estilizado, efectos de partículas al golpear/destruir enemigos y números de daño flotantes (*damage popups*).
+- **Control:** Palanca virtual dinámica con soporte ergonómico para **Modo Diestro** (joystick izquierda, definitiva derecha) y **Modo Zurdo** (joystick derecha, definitiva izquierda).
+- **Estilo Visual:** Mazmorra de piedra oscura con sello ceremonial rúnico sangriento central, sprites temáticos, proyectiles mágicos brillantes y números de daño flotantes (*damage popups*).
 
 ---
 
@@ -19,34 +20,36 @@ Documento de Diseño del Juego (GDD) y especificación técnica de la arquitectu
 
 ```mermaid
 graph TD
-    A[Menú Principal / Taller] -->|Gastar Oro en Mejoras Permanentes| B[Seleccionar Héroe & Nivel]
-    B -->|Iniciar Partida| C[Entrar en la Mazmorra]
+    A[Menú Principal / Taller] -->|Gastar Oro en Mejoras Permanentes| B[Configurar Ergonomía Diestro/Zurdo]
+    B -->|Iniciar Partida| C[Entrar en la Mazmorra de Piedra]
     C -->|Moverse con Joystick y Esquivar| D[Ataques Automáticos a Enemigos]
     D -->|Enemigos Derrotados| E[Recoger Gemas de EXP y Monedas]
     E -->|Subir de Nivel en la Partida| F[Elegir 1 de 3 Habilidades Aleatorias]
     F --> D
+    D -->|Acumular 20 Kills| U[Activar Habilidad Definitiva: Nova Arcana]
+    U --> D
     D -->|Sobrevivir a Oleadas y Jefes| G{¿Vida = 0 o Tiempo Final?}
     G -->|Derrota o Victoria| H[Pantalla de Resultados y Estadísticas]
     H -->|Guardar Oro y Récord en BBDD Local| A
 ```
 
 ### 2.1. Mecánicas en Partida (*In-Game Loop*)
-1. **Movimiento:** El jugador mueve a su personaje mediante el joystick táctil.
-2. **Auto-Ataque:** El personaje dispara o ataca automáticamente al enemigo más cercano dentro de su rango (elimina la incomodidad de apuntar con un segundo stick en pantallas táctiles).
-3. **Oleadas Progresivas:** Cada 30 segundos aumenta el número y resistencia de los enemigos en pantalla.
-4. **Subida de Nivel (*Level Up*):**
-   - Al matar enemigos caen gemas de experiencia.
-   - Al llenar la barra de EXP, el juego se pausa momentáneamente y se presentan **3 cartas de habilidad aleatorias** (ej: *+1 Proyectil*, *+20% Velocidad de Ataque*, *Aura de Fuego*, *Escudo Giratorio*).
-5. **Jefes de Fase:** Cada 3 minutos aparece un jefe con patrones de ataque únicos.
+1. **Movimiento:** El jugador mueve a su personaje mediante el joystick táctil virtual.
+2. **Auto-Ataque:** El personaje dispara automáticamente al enemigo más cercano dentro de su rango (450 px) con cadencia y daño mejorables.
+3. **Habilidad Definitiva (*Nova Arcana*):** Cada baja suma carga al botón de la definitiva; al llegar a 20 eliminaciones se activa un botón pulsante con onda de choque de 360 grados y repulsión.
+4. **Oleadas Progresivas:** Cada 45 segundos aumenta el nivel de oleada.
+   - *Oleadas 1-2:* Murciélagos, esqueletos y brutos iniciales.
+   - *Oleada 3 en adelante:* Se incorporan Magos Cultistas (ataque a distancia) y Duendes Bomba (kamikazes con explosión de área).
+   - *Oleada 5 y 10:* Aparición de Lord Malakor (Jefe con barra de salud en HUD y disparos en abanico).
+5. **Subida de Nivel (*Level Up*):** Al llenar la barra de EXP, el juego se pausa y se presentan 3 cartas de habilidad aleatorias (*Furia Destructiva*, *Cadencia Arcana*, *Zancada Veloz*, *Bendición Vital*, *Vórtice Magnético*).
 
 ### 2.2. Meta-Progresión (*Out-of-Game Loop*)
-- Todo el oro recogido en las partidas se almacena en la **base de datos local** del dispositivo.
+- Todo el oro recogido en las partidas se almacena en la **base de datos local SQLite** del dispositivo.
 - En el **Taller del Menú**, el jugador gasta este oro para desbloquear mejoras que aplican permanentemente a todas las futuras partidas:
-  - Vida máxima permanente (+5% por nivel).
-  - Daño base permanente (+3% por nivel).
-  - Rango de recolección de gemas (imán permanente).
-  - Probabilidad de crítico.
-  - Velocidad de movimiento permanente.
+  - Vitalidad Titánica (+10% de vida por nivel).
+  - Fuerza Arcana (+8% de daño por nivel).
+  - Pies Alados (+5% de velocidad de movimiento por nivel).
+  - Magnetismo Áureo (+15% de radio de imán por nivel).
 
 ---
 
@@ -221,16 +224,19 @@ Para evitar que un usuario manipule fácilmente las monedas locales modificando 
 
 ## 7. Plan de Implementación Técnica de Clases
 
-Las clases principales a desarrollar se dividen en:
+Las clases principales del sistema se dividen en:
 
 | Archivo / Clase | Responsabilidad |
 |---|---|
-| `MainGame (extends FlameGame)` | Controla el bucle, la gravedad, los overlays y las colisiones. |
-| `PlayerComponent` | Maneja el sprite del jugador, vida, velocidad y colisión de su cuerpo. |
-| `WeaponComponent` | Dispara proyectiles automáticamente hacia el enemigo más próximo. |
-| `EnemyComponent` | Se mueve en dirección al jugador con velocidad configurable según tipo (zombi, murciélago, nigromante). |
-| `GemComponent` | Objeto que cae al morir un enemigo y vuela hacia el jugador si entra en su radio magnético. |
-| `AppDatabase` | Clase Drift que expone todas las tablas y consultas tipadas. |
-| `SaveGameRepository` | Fachada que conecta la UI y el motor de juego con la base de datos SQLite. |
-| `LevelUpOverlay` | Widget de Flutter que muestra las 3 opciones de habilidades al subir de nivel. |
-| `HUDOverlay` | Widget flotante con la barra de vida roja, barra de exp azul y cronómetro. |
+| `DungeonGame (extends FlameGame)` | Controla el bucle a 60 FPS, control de cámaras, spawning por oleadas y overlays. |
+| `PlayerComponent` | Sprite del héroe, movimiento analógico con joystick, auto-disparo y habilidad definitiva Nova Arcana. |
+| `EnemyComponent` | Tipos variados: Murciélago, Esqueleto, Bruto, Mago Cultista, Duende Bomba y Jefe Lord Malakor. |
+| `EnemyBulletComponent` | Proyectil mágico disparado por enemigos (Cultista y Jefe) que daña al jugador al impactar. |
+| `ExplosionComponent` | Onda expansiva ígnea provocada por la detonación del Duende Bomba al morir. |
+| `DungeonMapComponent` | Renderizado ultra-rápido en GPU con PictureRecorder del suelo de piedra y el sello arcano sangriento. |
+| `GemComponent` | Gemas de EXP y monedas de oro con física de atracción magnética acelerada hacia el jugador. |
+| `AudioManager` | Gestión nativa de efectos sonoros mediante pools de audio reutilizables (`AudioPool`) de latencia cero. |
+| `AppDatabase` | Base de datos SQLite relacional embebida (Drift) sin conexión a internet. |
+| `HudOverlay` | Widget de Flutter con barras de salud, exp, cronómetro, barra superior de jefe y botón de la definitiva. |
+| `WorkshopOverlay` | Taller de mejoras permanentes con persistencia SQLite y selector ergonómico Diestro/Zurdo. |
+| `LevelUpOverlay` | Modal de subida de nivel con selección de 3 cartas de bendiciones aleatorias. |
