@@ -37,17 +37,40 @@ Para ofrecer una experiencia ágil y fluida en pantallas táctiles con una sola 
 
 El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros perimetrales luminosos. Los monstruos aparecen alrededor del jugador desde fuera del ángulo de visión:
 
-### 3.1. Tipos de Enemigos
-| Monstruo | Vida Base | Velocidad | Daño Contacto | EXP | Probabilidad Oro | Comportamiento |
+### 3.1. Tipos de Enemigos y Bestiario
+| Monstruo | Vida Base | Velocidad | Daño Contacto | EXP | Probabilidad Oro | Comportamiento Especial |
 |---|:---:|:---:|:---:|:---:|:---:|---|
-| 🦇 **Murciélago Espectral** | 20 HP | 95 px/s | 8 | 15 EXP | 25% | Muy rápido, ágil y de baja salud. Embiste en bandada. |
+| 🦇 **Murciélago Espectral** | 20 HP | 100 px/s | 8 | 15 EXP | 25% | Muy rápido, ágil y de baja salud. Embiste en bandada. |
 | 💀 **Guerrero Esqueleto** | 45 HP | 65 px/s | 14 | 30 EXP | 50% | Enemigo estándar equilibrado con ojos dorados. |
 | 👹 **Bruto Demoníaco** | 120 HP | 40 px/s | 25 | 80 EXP | 90% | Minijefe pesado, resiste muchos impactos y hace gran daño. |
+| 🔮 **Mago Cultista (Oleada 3+)** | 40 HP | 55 px/s | 12 | 40 EXP | 40% | Guarda distancia media y dispara orbes mágicos dañinos cada 2.5s. |
+| 💣 **Duende Bomba (Oleada 3+)** | 24 HP | 130 px/s | 10 | 25 EXP | 35% | Corre frenéticamente con una bomba y estalla al morir dañando en área. |
+| 👑 **Lord Malakor - Señor del Abismo (Jefe Oleada 5 y 10)** | 480 HP | 45 px/s | 30 | 350 EXP | 100% | Colosal demonio acorazado con cuernos ardientes. Lanza ráfagas triples de proyectiles en abanico. Al ser derrotado libera un festín legendario de gemas y oro. |
 
-### 3.2. Progresión Temporal de Dificultad (Oleadas)
+### 3.2. Progresión Temporal de Dificultad y Jefes de Oleada
 - Cada **45 segundos** de supervivencia, el nivel de oleada aumenta (`Oleada = (Tiempo / 45) + 1`).
-- **Escalado de salud y daño de los enemigos:** `Multiplicador = 1.0 + (Oleada - 1) * 0.25` (+25% por oleada).
-- **Frecuencia de generación:** El intervalo entre apariciones de monstruos se reduce gradualmente desde **2.0 segundos** hasta un límite frenético de **0.4 segundos**.
+- **Escalado de salud y daño:** `Multiplicador = 1.0 + (Oleada - 1) * 0.18`.
+- **Oleadas 1-2:** Monstruos introductorios (murciélagos, esqueletos, brutos).
+- **Oleada 3 en adelante:** La composición enemiga se diversifica incorporando Magos Cultistas y Duendes Bomba.
+- **Oleadas 5 y 10 (Jefe de Mazmorra):** Aparece con rugido de alerta **Lord Malakor**. Se activa la barra de vida de jefe superior en el HUD.
+
+---
+
+## 4. Habilidad Definitiva del Héroe (*Ultimate: Nova Arcana*)
+
+1. **Carga por Eliminaciones:** Cada enemigo derrotado suma un punto al contador de la habilidad definitiva (hasta un máximo de **20 bajas**).
+2. **Botón Táctil de Activación:** Al alcanzar las 20 eliminaciones, el botón de la definitiva en el HUD se ilumina con una animación de pulso cian radiante (`¡NOVA!`).
+3. **Efecto de la Habilidad:**
+   - Desata una descarga masiva de **18 proyectiles perforantes en 360 grados** (`damage x 2.5`).
+   - Genera una **onda de choque de repulsión** que empuja a todos los enemigos cercanos 90 píxeles hacia atrás y les inflige daño masivo de área.
+   - El contador se reinicia a cero tras su uso, requiriendo otras 20 bajas para recargarse.
+
+---
+
+## 5. El Escenario: La Mazmorra Arcana
+- **Arena de Combate:** Área de **1600 x 1600 píxeles** con baldosas de piedra desgastada en alta definición.
+- **Sello Arcano Sangriento Central:** Un círculo ceremonial rúnico ancestral de 440 px de diámetro en el corazón de la mazmorra con inscripciones prohibidas y salpicaduras de sangre antiguas.
+- **Murallas de Contención:** Paredes de fortaleza perimetral con runas incandescentes de fuego que delimitan la zona segura.
 
 ---
 

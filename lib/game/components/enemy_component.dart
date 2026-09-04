@@ -2,11 +2,14 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../../core/audio_manager.dart';
+import 'enemy_bullet_component.dart';
+import 'explosion_component.dart';
 import 'gem_component.dart';
 import 'player_component.dart';
 import '../dungeon_game.dart';
 
-enum EnemyType { bat, skeleton, brute }
+enum EnemyType { bat, skeleton, brute, cultist, bomber, boss }
 
 class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameReference<DungeonGame> {
   final EnemyType type;
@@ -19,6 +22,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
 
   double _flashTimer = 0;
   double _attackCooldown = 0;
+  double _specialTimer = 0;
   final Sprite? sprite;
   double _facingDirection = 1.0;
 
@@ -82,10 +86,56 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     );
   }
 
+  factory EnemyComponent.cultist(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+    return EnemyComponent._(
+      position: position,
+      type: EnemyType.cultist,
+      maxHp: 40 * difficultyMultiplier,
+      speed: 55,
+      contactDamage: 12 * difficultyMultiplier,
+      expValue: 40,
+      goldChance: 40,
+      size: Vector2(34, 46),
+      sprite: sprite,
+    );
+  }
+
+  factory EnemyComponent.bomber(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+    return EnemyComponent._(
+      position: position,
+      type: EnemyType.bomber,
+      maxHp: 24 * difficultyMultiplier,
+      speed: 130, // Rápido y errático
+      contactDamage: 10 * difficultyMultiplier,
+      expValue: 25,
+      goldChance: 35,
+      size: Vector2(32, 34),
+      sprite: sprite,
+    );
+  }
+
+  factory EnemyComponent.boss(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+    return EnemyComponent._(
+      position: position,
+      type: EnemyType.boss,
+      maxHp: 480 * difficultyMultiplier,
+      speed: 45,
+      contactDamage: 30 * difficultyMultiplier,
+      expValue: 350,
+      goldChance: 100,
+      size: Vector2(65, 75),
+      sprite: sprite,
+    );
+  }
+
   @override
   void onMount() {
     super.onMount();
     game.activeEnemies.add(this);
+    if (type == EnemyType.boss) {
+      AudioManager.playBossRoar();
+      game.onBossSpawned(hp, maxHp);
+    }
   }
 
   @override
@@ -98,7 +148,8 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   void onLoad() {
     super.onLoad();
     // Hitbox pasiva: colisiona con proyectiles y jugador, pero NUNCA calcula pares enemigo-enemigo
-    add(CircleHitbox()..collisionType = CollisionType.passive);
+    final radius = type == EnemyType.boss ? 30.0 : (size.x * 0.4);
+    add(CircleHitbox(radius: radius, anchor: Anchor.center, position: size / 2)..collisionType = CollisionType.passive);
   }
 
   @override
@@ -118,16 +169,62 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
       final diffY = player.position.y - position.y;
       final distSq = diffX * diffX + diffY * diffY;
 
-      // Culling: si el enemigo se aleja demasiado (> 1200 px), reposicionarlo cerca del borde visible
-      if (distSq > 1440000) {
+      // Culling: si un enemigo común se aleja demasiado (> 1200 px), reposicionarlo cerca del jugador (salvo el jefe)
+      if (type != EnemyType.boss && distSq > 1440000) {
         position.setFrom(game.getRandomSpawnPosition());
         return;
       }
 
-      // Daño continuo al jugador por proximidad física (sin generar sets de colisión cada frame)
-      if (_attackCooldown <= 0 && distSq <= 28 * 28) {
+      // Daño continuo al jugador por proximidad física (sin sobrecarga de colisión continua)
+      final contactRadiusSq = type == EnemyType.boss ? 42 * 42 : 28 * 28;
+      if (_attackCooldown <= 0 && distSq <= contactRadiusSq) {
         player.takeDamage(contactDamage);
         _attackCooldown = 0.6;
+      }
+
+      // Ataque especial a distancia del Cultista (disparo individual)
+      if (type == EnemyType.cultist) {
+        _specialTimer += dt;
+        if (_specialTimer >= 2.5) {
+          _specialTimer = 0;
+          if (distSq <= 460 * 460 && distSq > 50 * 50) {
+            AudioManager.playEnemyShoot();
+            final dir = Vector2(diffX, diffY).normalized();
+            game.world.add(EnemyBulletComponent(
+              position: position.clone(),
+              direction: dir,
+              speed: 210,
+              damage: 12,
+            ));
+          }
+        }
+      }
+
+      // Ataque especial del Jefe (ráfaga triple en abanico)
+      if (type == EnemyType.boss) {
+        _specialTimer += dt;
+        if (_specialTimer >= 2.2) {
+          _specialTimer = 0;
+          if (distSq <= 550 * 550) {
+            AudioManager.playEnemyShoot();
+            final baseDir = Vector2(diffX, diffY).normalized();
+            const spread = 0.42; // ~24 grados
+            for (final angleOffset in [-spread, 0.0, spread]) {
+              final cosA = cos(angleOffset);
+              final sinA = sin(angleOffset);
+              final spreadDir = Vector2(
+                baseDir.x * cosA - baseDir.y * sinA,
+                baseDir.x * sinA + baseDir.y * cosA,
+              );
+              game.world.add(EnemyBulletComponent(
+                position: position.clone(),
+                direction: spreadDir,
+                speed: 230,
+                damage: 18,
+              ));
+            }
+          }
+        }
       }
 
       if (distSq > 1) {
@@ -135,8 +232,15 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
         final normX = diffX / dist;
         final normY = diffY / dist;
         _facingDirection = normX >= 0 ? 1.0 : -1.0;
-        position.x += normX * (speed * dt);
-        position.y += normY * (speed * dt);
+
+        // El cultista guarda un poco de distancia si está demasiado cerca
+        if (type == EnemyType.cultist && dist < 140) {
+          position.x -= normX * (speed * 0.7 * dt);
+          position.y -= normY * (speed * 0.7 * dt);
+        } else {
+          position.x += normX * (speed * dt);
+          position.y += normY * (speed * dt);
+        }
       }
     }
   }
@@ -160,8 +264,8 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
       canvas.restore();
     }
 
-    // Barra de vida si ha recibido daño
-    if (hp < maxHp) {
+    // Barra de vida si ha recibido daño (en el jefe se muestra en el HUD superior)
+    if (type != EnemyType.boss && hp < maxHp) {
       final barWidth = size.x;
       const barHeight = 4.0;
       final barRect = Rect.fromLTWH(0, -8, barWidth, barHeight);
@@ -176,6 +280,10 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     hp -= amount;
     _flashTimer = 0.08;
 
+    if (type == EnemyType.boss) {
+      game.onBossHpChanged(hp, maxHp);
+    }
+
     if (hp <= 0) {
       die();
     }
@@ -184,11 +292,24 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   void die() {
     game.onEnemyKilled(this);
 
-    // Gemas de EXP y Oro limitadas con pool para que el juego nunca se cuelgue
-    game.spawnGem(position.clone(), GemType.exp, expValue);
+    // Si es un Duende Bomba, explota al morir con daño de área
+    if (type == EnemyType.bomber) {
+      game.world.add(ExplosionComponent(position: position.clone(), damage: 24));
+    }
 
-    if (Random().nextInt(100) < goldChance) {
-      game.spawnGem(position.clone() + Vector2(8, 0), GemType.gold, 5);
+    // Si es el Jefe, recompensa legendaria masiva
+    if (type == EnemyType.boss) {
+      game.onBossDefeated();
+      for (int i = 0; i < 4; i++) {
+        game.spawnGem(position + Vector2((i - 1.5) * 20.0, 0), GemType.exp, 100);
+        game.spawnGem(position + Vector2((i - 1.5) * 20.0, 20.0), GemType.gold, 30);
+      }
+    } else {
+      // Gemas comunes
+      game.spawnGem(position.clone(), GemType.exp, expValue);
+      if (Random().nextInt(100) < goldChance) {
+        game.spawnGem(position.clone() + Vector2(8, 0), GemType.gold, 5);
+      }
     }
 
     removeFromParent();

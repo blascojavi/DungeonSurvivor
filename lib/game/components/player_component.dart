@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -185,5 +186,51 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
       game.queuePlayerLevelUp(level);
     }
     game.onPlayerExpChanged(currentExp, expToNextLevel, level);
+  }
+
+  // --- Habilidad Definitiva (Ultimate) ---
+  int ultimateKills = 0;
+  static const int requiredUltimateKills = 20;
+
+  void onEnemyKilled() {
+    if (ultimateKills < requiredUltimateKills) {
+      ultimateKills++;
+      game.onUltimateChargeChanged(ultimateKills / requiredUltimateKills);
+    }
+  }
+
+  void triggerUltimate() {
+    if (ultimateKills < requiredUltimateKills || !isAlive) return;
+    ultimateKills = 0;
+    game.onUltimateChargeChanged(0.0);
+    AudioManager.playUltimate();
+
+    // 1. Descarga masiva radial de 18 proyectiles en 360 grados
+    const int projectileCount = 18;
+    for (int i = 0; i < projectileCount; i++) {
+      final angle = i * (2 * 3.14159265 / projectileCount);
+      final dir = Vector2(cos(angle), sin(angle));
+      game.world.add(BulletComponent(
+        position: position.clone(),
+        direction: dir,
+        damage: bulletDamage * 2.5,
+        speed: 520,
+        maxRange: 750,
+      ));
+    }
+
+    // 2. Onda expansiva con daño y repulsión a todos los enemigos cercanos
+    final enemies = game.activeEnemies;
+    for (int i = 0; i < enemies.length; i++) {
+      final e = enemies[i];
+      if (!e.isMounted) continue;
+      final diff = e.position - position;
+      final distSq = diff.length2;
+      if (distSq <= 280 * 280 && distSq > 1) {
+        final pushDir = diff.normalized();
+        e.position += pushDir * 90;
+        e.takeDamage(bulletDamage * 1.5);
+      }
+    }
   }
 }

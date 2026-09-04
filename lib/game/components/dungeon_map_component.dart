@@ -1,11 +1,12 @@
 import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../dungeon_game.dart';
 
-class DungeonMapComponent extends PositionComponent {
+class DungeonMapComponent extends PositionComponent with HasGameReference<DungeonGame> {
   static const double mapWidth = 1600;
   static const double mapHeight = 1600;
-  static const double tileSize = 80;
+  static const double textureTileSize = 320;
 
   ui.Picture? _cachedMapPicture;
 
@@ -19,51 +20,88 @@ class DungeonMapComponent extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _cacheMap();
+    try {
+      final floorImage = await game.images.load('dungeon_floor.png');
+      ui.Image? circleImage;
+      try {
+        circleImage = await game.images.load('arcane_blood_circle.png');
+      } catch (_) {}
+      _cacheMap(floorImage, circleImage);
+    } catch (_) {
+      _cacheFallbackMap();
+    }
   }
 
-  void _cacheMap() {
+  void _cacheMap(ui.Image floorImage, ui.Image? circleImage) {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, mapWidth, mapHeight));
 
-    // 1. Fondo oscuro
-    final bgPaint = Paint()..color = const Color(0xFF0F1420);
-    canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), bgPaint);
+    // 1. Fondo base oscuro
+    canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), Paint()..color = const Color(0xFF0F1420));
 
-    // 2. Baldosas grabadas una sola vez en la GPU
-    final tilePaint = Paint()
-      ..color = const Color(0xFF1B2336)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+    // 2. Mapeado de baldosas de piedra auténticas de mazmorra (5x5 repeticiones de 320px)
+    final srcRect = Rect.fromLTWH(0, 0, floorImage.width.toDouble(), floorImage.height.toDouble());
+    final tilePaint = Paint()..filterQuality = FilterQuality.medium;
 
-    final runePaint = Paint()
-      ..color = const Color(0x1200E5FF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    for (double x = 0; x < mapWidth; x += tileSize) {
-      for (double y = 0; y < mapHeight; y += tileSize) {
-        canvas.drawRect(Rect.fromLTWH(x, y, tileSize, tileSize), tilePaint);
-
-        if ((x + y) % (tileSize * 4) == 0) {
-          canvas.drawCircle(Offset(x + tileSize / 2, y + tileSize / 2), tileSize * 0.22, runePaint);
-        }
+    for (double x = 0; x < mapWidth; x += textureTileSize) {
+      for (double y = 0; y < mapHeight; y += textureTileSize) {
+        final dstRect = Rect.fromLTWH(x, y, textureTileSize, textureTileSize);
+        canvas.drawImageRect(floorImage, srcRect, dstRect, tilePaint);
       }
     }
 
-    // 3. Muro perimetral luminoso sin filtros de desenfoque costosos
-    final outerWallPaint = Paint()
-      ..color = const Color(0x55FF3D00)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8;
-    canvas.drawRect(const Rect.fromLTWH(4, 4, mapWidth - 8, mapHeight - 8), outerWallPaint);
+    // 3. Tinte atmosférico para mazmorra oscura (Dark Fantasy Ambient Tint)
+    final tintPaint = Paint()..color = const Color(0x33000511);
+    canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), tintPaint);
 
-    final innerWallPaint = Paint()
-      ..color = const Color(0xFFFF5722)
+    // 4. Gran Sello Arcano Rúnico Sangriento en el centro de la mazmorra
+    final center = const Offset(mapWidth / 2, mapHeight / 2);
+    if (circleImage != null) {
+      final circleSrc = Rect.fromLTWH(0, 0, circleImage.width.toDouble(), circleImage.height.toDouble());
+      final circleDst = Rect.fromCenter(center: center, width: 440, height: 440);
+      canvas.drawImageRect(circleImage, circleSrc, circleDst, Paint()..filterQuality = FilterQuality.medium);
+
+      // Halo carmesí y cian sutil alrededor del sello
+      final glowPaint = Paint()
+        ..color = const Color(0x18FF1744)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 14;
+      canvas.drawCircle(center, 220, glowPaint);
+    } else {
+      // Fallback si no carga la imagen
+      final runeRingOuter = Paint()
+        ..color = const Color(0x2800E5FF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3;
+      canvas.drawCircle(center, 180, runeRingOuter);
+    }
+
+    // 5. Murallas perimetrales de piedra maciza y runas incandescentes de contención
+    final wallBorderOuter = Paint()
+      ..color = const Color(0xFF070A10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 24;
+    canvas.drawRect(const Rect.fromLTWH(12, 12, mapWidth - 24, mapHeight - 24), wallBorderOuter);
+
+    final wallEmbers = Paint()
+      ..color = const Color(0x77FF3D00)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
-    canvas.drawRect(const Rect.fromLTWH(4, 4, mapWidth - 8, mapHeight - 8), innerWallPaint);
+    canvas.drawRect(const Rect.fromLTWH(24, 24, mapWidth - 48, mapHeight - 48), wallEmbers);
 
+    final wallGlow = Paint()
+      ..color = const Color(0x22FF5722)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8;
+    canvas.drawRect(const Rect.fromLTWH(24, 24, mapWidth - 48, mapHeight - 48), wallGlow);
+
+    _cachedMapPicture = recorder.endRecording();
+  }
+
+  void _cacheFallbackMap() {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, mapWidth, mapHeight));
+    canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), Paint()..color = const Color(0xFF0F1420));
     _cachedMapPicture = recorder.endRecording();
   }
 

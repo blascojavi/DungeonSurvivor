@@ -31,9 +31,23 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   Sprite? batSprite;
   Sprite? skeletonSprite;
   Sprite? bruteSprite;
+  Sprite? cultistSprite;
+  Sprite? bomberSprite;
+  Sprite? bossSprite;
 
   // Cola de niveles pendientes para evitar bloqueos del Overlay al ganar mucha EXP
   int pendingLevelUps = 0;
+
+  // Estado y alertas de Jefes de Oleada
+  bool _bossSpawnedWave5 = false;
+  bool _bossSpawnedWave10 = false;
+  final ValueNotifier<bool> isBossAliveNotifier = ValueNotifier(false);
+  final ValueNotifier<String> bossNameNotifier = ValueNotifier('LORD MALAKOR - SEÑOR DEL ABISMO');
+  final ValueNotifier<double> bossHpNotifier = ValueNotifier(1.0);
+
+  // Notificadores para la Habilidad Definitiva (Ultimate)
+  final ValueNotifier<double> ultimateChargeNotifier = ValueNotifier(0.0);
+  final ValueNotifier<bool> isUltimateReadyNotifier = ValueNotifier(false);
 
   // Estadísticas de la partida en curso
   int score = 0;
@@ -71,11 +85,14 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     // Precarga de audio
     await AudioManager.initialize();
 
-    // Precarga de sprites de enemigos una sola vez
+    // Precarga de sprites de enemigos y jefes una sola vez
     try {
       batSprite = await loadSprite('bat.png');
       skeletonSprite = await loadSprite('skeleton.png');
       bruteSprite = await loadSprite('brute.png');
+      cultistSprite = await loadSprite('cultist.png');
+      bomberSprite = await loadSprite('bomber.png');
+      bossSprite = await loadSprite('boss.png');
     } catch (_) {}
 
     // 1. Añadir el mapa de la mazmorra al mundo
@@ -179,18 +196,48 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       return; // Límite estricto de entidades para asegurar 60/120 FPS sin tirones
     }
 
+    // Invocación del Jefe de Mazmorra en Oleadas 5 y 10
+    if (currentWave >= 5 && !_bossSpawnedWave5) {
+      _bossSpawnedWave5 = true;
+      world.add(EnemyComponent.boss(getRandomSpawnPosition(), 1.0, bossSprite));
+      return;
+    }
+    if (currentWave >= 10 && !_bossSpawnedWave10) {
+      _bossSpawnedWave10 = true;
+      world.add(EnemyComponent.boss(getRandomSpawnPosition(), 1.5, bossSprite));
+      return;
+    }
+
     final spawnPos = getRandomSpawnPosition();
     final difficultyMultiplier = 1.0 + (currentWave - 1) * 0.18;
 
     final roll = _random.nextInt(100);
     EnemyComponent enemy;
-    if (roll < 55) {
-      enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
-    } else if (roll < 85) {
-      enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+
+    if (currentWave < 3) {
+      // Oleadas 1 y 2: Enemigos introductorios
+      if (roll < 55) {
+        enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+      } else if (roll < 85) {
+        enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+      } else {
+        enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+      }
     } else {
-      enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+      // Oleada 3+: Se incorporan Magos Cultistas a distancia y Duendes Bomba
+      if (roll < 26) {
+        enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+      } else if (roll < 48) {
+        enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+      } else if (roll < 62) {
+        enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+      } else if (roll < 82) {
+        enemy = EnemyComponent.cultist(spawnPos, difficultyMultiplier, cultistSprite);
+      } else {
+        enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite);
+      }
     }
+
     world.add(enemy);
   }
 
@@ -206,6 +253,30 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     enemiesSlain++;
     score += (enemy.expValue * currentWave);
     killsNotifier.value = enemiesSlain;
+    player.onEnemyKilled();
+  }
+
+  void onBossSpawned(double hp, double maxHp) {
+    isBossAliveNotifier.value = true;
+    bossHpNotifier.value = (hp / maxHp).clamp(0.0, 1.0);
+  }
+
+  void onBossHpChanged(double hp, double maxHp) {
+    bossHpNotifier.value = (hp / maxHp).clamp(0.0, 1.0);
+  }
+
+  void onBossDefeated() {
+    isBossAliveNotifier.value = false;
+    bossHpNotifier.value = 0.0;
+  }
+
+  void onUltimateChargeChanged(double ratio) {
+    ultimateChargeNotifier.value = ratio;
+    isUltimateReadyNotifier.value = ratio >= 1.0;
+  }
+
+  void triggerPlayerUltimate() {
+    player.triggerUltimate();
   }
 
   void addGold(int amount) {
