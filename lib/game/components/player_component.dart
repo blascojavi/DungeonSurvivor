@@ -1,9 +1,9 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../../core/audio_manager.dart';
 import 'bullet_component.dart';
 import 'enemy_component.dart';
-import 'gem_component.dart';
 import '../dungeon_game.dart';
 
 class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGameReference<DungeonGame> {
@@ -21,7 +21,13 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   // Estado interno
   bool isAlive = true;
   double _shootTimer = 0;
+  double _magnetTimer = 0;
+  double _invulnerableTimer = 0;
   Vector2 moveDirection = Vector2.zero();
+  Sprite? _heroSprite;
+
+  static final Paint _auraPaint = Paint()..color = const Color(0x3300E5FF);
+  static final Paint _fallbackPaint = Paint()..color = const Color(0xFF2979FF);
 
   PlayerComponent({
     required Vector2 position,
@@ -31,12 +37,16 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     this.attackInterval = 0.5,
     this.bulletDamage = 25,
   })  : hp = maxHp,
-        super(position: position, size: Vector2(36, 36), anchor: Anchor.center);
+        super(position: position, size: Vector2(36, 52), anchor: Anchor.center);
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(CircleHitbox()..collisionType = CollisionType.active);
+    // Hitbox en el torso/base para colisiones justas
+    add(CircleHitbox(radius: 16, position: Vector2(size.x / 2 - 16, size.y - 34))..collisionType = CollisionType.active);
+    try {
+      _heroSprite = await game.loadSprite('hero.png');
+    } catch (_) {}
   }
 
   @override
@@ -44,11 +54,13 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     super.update(dt);
     if (!isAlive) return;
 
+    if (_invulnerableTimer > 0) {
+      _invulnerableTimer -= dt;
+    }
+
     // 1. Movimiento por Joystick o teclado
     if (!moveDirection.isZero()) {
       position += moveDirection.normalized() * (speed * dt);
-      
-      // Limitar dentro del mapa (1600 x 1600)
       position.x = position.x.clamp(20.0, 1580.0);
       position.y = position.y.clamp(20.0, 1580.0);
     }
@@ -60,27 +72,36 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
       _autoFireNearestEnemy();
     }
 
-    // 3. Imán de gemas
-    _attractNearbyGems();
+    // 3. Imán de gemas throttled (cada 120ms para rendimiento a 60/120 FPS)
+    _magnetTimer += dt;
+    if (_magnetTimer >= 0.12) {
+      _magnetTimer = 0;
+      _attractNearbyGems();
+    }
   }
 
   void _autoFireNearestEnemy() {
-    final enemies = game.world.children.whereType<EnemyComponent>().toList();
+    final enemies = game.activeEnemies;
     if (enemies.isEmpty) return;
 
     EnemyComponent? nearest;
-    double minDistance = double.infinity;
+    double minDistanceSq = double.infinity;
+    const maxRange = 450.0;
+    const maxRangeSq = maxRange * maxRange;
 
-    for (final enemy in enemies) {
-      final dist = (enemy.position - position).length;
-      if (dist < minDistance && dist < 450) {
-        // Rango de visión de disparo: 450 px
-        minDistance = dist;
+    for (int i = 0; i < enemies.length; i++) {
+      final enemy = enemies[i];
+      if (!enemy.isMounted) continue;
+      // length2 evita el cálculo costoso de raíz cuadrada (sqrt)
+      final distSq = (enemy.position - position).length2;
+      if (distSq < minDistanceSq && distSq < maxRangeSq) {
+        minDistanceSq = distSq;
         nearest = enemy;
       }
     }
 
     if (nearest != null) {
+      AudioManager.playShoot();
       final dir = (nearest.position - position).normalized();
       game.world.add(BulletComponent(
         position: position.clone(),
@@ -91,11 +112,13 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   }
 
   void _attractNearbyGems() {
-    final gems = game.world.children.whereType<GemComponent>();
-    for (final gem in gems) {
+    final magnetRadiusSq = magnetRadius * magnetRadius;
+    final gems = game.activeGems;
+    for (int i = 0; i < gems.length; i++) {
+      final gem = gems[i];
       if (!gem.isAttracted) {
-        final dist = (gem.position - position).length;
-        if (dist <= magnetRadius) {
+        final distSq = (gem.position - position).length2;
+        if (distSq <= magnetRadiusSq) {
           gem.attract();
         }
       }
@@ -104,39 +127,41 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   @override
   void render(Canvas canvas) {
+    if (!isAlive) return;
+
+    // Parpadeo durante el tiempo de invulnerabilidad tras recibir daño
+    if (_invulnerableTimer > 0 && (_invulnerableTimer * 24).toInt() % 2 == 0) {
+      return;
+    }
+
     super.render(canvas);
+    final center = Offset(size.x / 2, size.y / 2);
 
-    // Aura o halo brillante
-    final auraPaint = Paint()
-      ..color = const Color(0x333F51B5)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.drawCircle(Offset(size.x / 2, size.y / 2), size.x / 2 + 6, auraPaint);
+    // Halo ligero sin desenfoque costoso
+    canvas.drawCircle(center, size.x / 2 + 3, _auraPaint);
 
-    // Armadura / Túnica del Héroe (Azul cobalto místico)
-    final heroPaint = Paint()
-      ..color = const Color(0xFF2979FF)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.x / 2, size.y / 2), size.x / 2, heroPaint);
-
-    // Yelmo dorado / Visera
-    final helmetPaint = Paint()..color = const Color(0xFFFFD700);
-    final helmetRect = Rect.fromCenter(
-      center: Offset(size.x / 2, size.y * 0.4),
-      width: size.x * 0.6,
-      height: size.y * 0.3,
-    );
-    canvas.drawRRect(RRect.fromRectAndRadius(helmetRect, const Radius.circular(4)), helmetPaint);
-
-    // Ojos del yelmo
-    final eyePaint = Paint()..color = const Color(0xFF00E5FF);
-    canvas.drawCircle(Offset(size.x * 0.4, size.y * 0.4), 2, eyePaint);
-    canvas.drawCircle(Offset(size.x * 0.6, size.y * 0.4), 2, eyePaint);
+    if (_heroSprite != null) {
+      if (moveDirection.x < 0) {
+        // Volteo horizontal si se mueve a la izquierda
+        canvas.save();
+        canvas.translate(size.x, 0);
+        canvas.scale(-1, 1);
+        _heroSprite!.render(canvas, size: size);
+        canvas.restore();
+      } else {
+        _heroSprite!.render(canvas, size: size);
+      }
+    } else {
+      canvas.drawCircle(center, size.x / 2, _fallbackPaint);
+    }
   }
 
   void takeDamage(double amount) {
-    if (!isAlive) return;
+    if (!isAlive || _invulnerableTimer > 0) return;
 
+    _invulnerableTimer = 0.45; // 450ms de i-frames para no saturar colisiones ni audio
     hp -= amount;
+    AudioManager.playHurt();
     game.onPlayerHealthChanged(hp, maxHp);
 
     if (hp <= 0) {
@@ -153,25 +178,12 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   void addExp(int amount) {
     currentExp += amount;
-    if (currentExp >= expToNextLevel) {
+    while (currentExp >= expToNextLevel) {
       currentExp -= expToNextLevel;
       level++;
       expToNextLevel = (expToNextLevel * 1.3).round();
-      game.onPlayerLevelUp(level);
+      game.queuePlayerLevelUp(level);
     }
     game.onPlayerExpChanged(currentExp, expToNextLevel, level);
-  }
-
-  @override
-  void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollisionStart(intersectionPoints, other);
-    if (other is GemComponent) {
-      if (other.type == GemType.exp) {
-        addExp(other.value);
-      } else if (other.type == GemType.gold) {
-        game.addGold(other.value);
-      }
-      other.removeFromParent();
-    }
   }
 }

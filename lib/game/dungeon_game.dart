@@ -4,18 +4,36 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../core/audio_manager.dart';
 import '../data/database/database.dart';
 import '../data/repositories/game_repository.dart';
 import 'components/dungeon_map_component.dart';
 import 'components/enemy_component.dart';
+import 'components/gem_component.dart';
 import 'components/player_component.dart';
 
 class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final GameRepository repository;
   final List<PermanentUpgrade> activeUpgrades;
+  final bool isLeftHanded;
 
   late PlayerComponent player;
   late JoystickComponent joystick;
+
+  // Pools controlados para máximo rendimiento
+  final List<EnemyComponent> activeEnemies = [];
+  final List<GemComponent> activeGems = [];
+  static const int maxEnemies = 32;
+  static const int maxGems = 32;
+  static final Random _random = Random();
+
+  // Sprites cacheados en memoria para no decodificar imágenes en caliente
+  Sprite? batSprite;
+  Sprite? skeletonSprite;
+  Sprite? bruteSprite;
+
+  // Cola de niveles pendientes para evitar bloqueos del Overlay al ganar mucha EXP
+  int pendingLevelUps = 0;
 
   // Estadísticas de la partida en curso
   int score = 0;
@@ -37,8 +55,6 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final ValueNotifier<int> killsNotifier = ValueNotifier(0);
   final ValueNotifier<int> timeSecondsNotifier = ValueNotifier(0);
 
-  final bool isLeftHanded;
-
   DungeonGame({
     required this.repository,
     required this.activeUpgrades,
@@ -51,6 +67,16 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Precarga de audio
+    await AudioManager.initialize();
+
+    // Precarga de sprites de enemigos una sola vez
+    try {
+      batSprite = await loadSprite('bat.png');
+      skeletonSprite = await loadSprite('skeleton.png');
+      bruteSprite = await loadSprite('brute.png');
+    } catch (_) {}
 
     // 1. Añadir el mapa de la mazmorra al mundo
     world.add(DungeonMapComponent());
@@ -99,7 +125,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     // 4. Configurar cámara para seguir suavemente al héroe
     camera.follow(player);
 
-    // 5. Crear Joystick Táctil en la interfaz de pantalla
+    // 5. Crear Joystick Táctil con margen adaptable zurdo/diestro
     final knobPaint = Paint()..color = const Color(0xCC00E5FF);
     final backgroundPaint = Paint()..color = const Color(0x441E2638);
 
@@ -129,7 +155,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
     // Dificultad progresiva por oleadas (cada 45 segundos sube de oleada)
     currentWave = (elapsedTime / 45).floor() + 1;
-    _spawnInterval = (2.0 - (currentWave * 0.15)).clamp(0.4, 2.0);
+    _spawnInterval = (2.0 - (currentWave * 0.12)).clamp(0.45, 2.0);
 
     // Generador de oleadas de enemigos
     _spawnTimer += dt;
@@ -139,30 +165,41 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
   }
 
+  Vector2 getRandomSpawnPosition() {
+    final angle = _random.nextDouble() * 2 * pi;
+    const spawnDistance = 540.0;
+    final pos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
+    pos.x = pos.x.clamp(60.0, DungeonMapComponent.mapWidth - 60.0);
+    pos.y = pos.y.clamp(60.0, DungeonMapComponent.mapHeight - 60.0);
+    return pos;
+  }
+
   void _spawnEnemyWave() {
-    final rand = Random();
-    // Generar enemigos en los bordes visibles alrededor del jugador
-    final angle = rand.nextDouble() * 2 * pi;
-    const spawnDistance = 550.0;
-    final spawnPos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
-
-    // Evitar generar fuera del mapa
-    spawnPos.x = spawnPos.x.clamp(50.0, DungeonMapComponent.mapWidth - 50.0);
-    spawnPos.y = spawnPos.y.clamp(50.0, DungeonMapComponent.mapHeight - 50.0);
-
-    final difficultyMultiplier = 1.0 + (currentWave - 1) * 0.25;
-
-    final roll = rand.nextInt(100);
-    if (roll < 55) {
-      // 55% Murciélago veloz
-      world.add(EnemyComponent.bat(spawnPos, difficultyMultiplier));
-    } else if (roll < 85) {
-      // 30% Esqueleto estándar
-      world.add(EnemyComponent.skeleton(spawnPos, difficultyMultiplier));
-    } else {
-      // 15% Bruto resistente
-      world.add(EnemyComponent.brute(spawnPos, difficultyMultiplier));
+    if (activeEnemies.length >= maxEnemies) {
+      return; // Límite estricto de entidades para asegurar 60/120 FPS sin tirones
     }
+
+    final spawnPos = getRandomSpawnPosition();
+    final difficultyMultiplier = 1.0 + (currentWave - 1) * 0.18;
+
+    final roll = _random.nextInt(100);
+    EnemyComponent enemy;
+    if (roll < 55) {
+      enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+    } else if (roll < 85) {
+      enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+    } else {
+      enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+    }
+    world.add(enemy);
+  }
+
+  void spawnGem(Vector2 pos, GemType type, int value) {
+    if (activeGems.length >= maxGems && activeGems.isNotEmpty) {
+      final oldest = activeGems.first;
+      oldest.removeFromParent();
+    }
+    world.add(GemComponent(position: pos, type: type, value: value));
   }
 
   void onEnemyKilled(EnemyComponent enemy) {
@@ -186,37 +223,55 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     playerLevelNotifier.value = level;
   }
 
-  void onPlayerLevelUp(int level) {
-    pauseEngine();
-    overlays.add('LevelUp');
+  void queuePlayerLevelUp(int level) {
+    pendingLevelUps++;
+    playerLevelNotifier.value = level;
+    if (!overlays.isActive('LevelUp')) {
+      AudioManager.playLevelUp();
+      pauseEngine();
+      overlays.add('LevelUp');
+    }
   }
 
   void applySkillUpgrade(String skillType) {
     switch (skillType) {
       case 'damage':
-        player.bulletDamage *= 1.25; // +25% daño
+        player.bulletDamage *= 1.25;
         break;
       case 'fire_rate':
-        player.attackInterval = (player.attackInterval * 0.82).clamp(0.12, 1.0); // +18% cadencia
+        player.attackInterval = (player.attackInterval * 0.82).clamp(0.12, 1.0);
         break;
       case 'speed':
-        player.speed *= 1.15; // +15% velocidad
+        player.speed *= 1.15;
         break;
       case 'heal_and_health':
         player.maxHp += 25;
-        player.heal(player.maxHp * 0.5); // Cura el 50% de la vida y añade vida máxima
+        player.heal(player.maxHp * 0.5);
         break;
       case 'magnet':
-        player.magnetRadius *= 1.4; // +40% imán
+        player.magnetRadius *= 1.4;
         break;
     }
-    overlays.remove('LevelUp');
-    resumeEngine();
+
+    pendingLevelUps--;
+    if (pendingLevelUps > 0) {
+      // Recrear el overlay limpiamente para el siguiente nivel pendiente sin congelar el juego
+      overlays.remove('LevelUp');
+      Future.microtask(() {
+        if (pendingLevelUps > 0 && isMounted) {
+          overlays.add('LevelUp');
+        }
+      });
+    } else {
+      pendingLevelUps = 0;
+      overlays.remove('LevelUp');
+      resumeEngine();
+    }
   }
 
   void onGameOver() {
+    AudioManager.playGameOver();
     pauseEngine();
-    // Guardar partida en la base de datos local SQLite de forma atómica y asíncrona
     repository.saveRunResult(
       score: score,
       survivedSeconds: elapsedTime.toInt(),

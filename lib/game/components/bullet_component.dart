@@ -1,6 +1,7 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../../core/audio_manager.dart';
 import 'enemy_component.dart';
 
 class BulletComponent extends PositionComponent with CollisionCallbacks {
@@ -31,35 +32,32 @@ class BulletComponent extends PositionComponent with CollisionCallbacks {
   @override
   void update(double dt) {
     super.update(dt);
-    final delta = direction * (speed * dt);
-    position += delta;
-    _distanceTraveled += delta.length;
+    position += direction * (speed * dt);
+    _distanceTraveled += speed * dt;
 
     if (_distanceTraveled >= maxRange) {
       removeFromParent();
     }
   }
 
+  static final Paint _glowPaint = Paint()..color = const Color(0x5500E5FF);
+  static final Paint _corePaint = Paint()..color = const Color(0xFF00E5FF);
+  static final Paint _highlightPaint = Paint()..color = Colors.white;
+
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // Renderizado de orbe de energía arcana
-    final glowPaint = Paint()
-      ..color = const Color(0x6600E5FF)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(Offset(size.x / 2, size.y / 2), size.x / 2 + 3, glowPaint);
-
-    final corePaint = Paint()..color = const Color(0xFF00E5FF);
-    canvas.drawCircle(Offset(size.x / 2, size.y / 2), size.x / 2, corePaint);
-
-    final highlightPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(Offset(size.x / 2 - 1, size.y / 2 - 1), size.x / 4, highlightPaint);
+    final center = Offset(size.x / 2, size.y / 2);
+    canvas.drawCircle(center, size.x / 2 + 2, _glowPaint);
+    canvas.drawCircle(center, size.x / 2 - 1, _corePaint);
+    canvas.drawCircle(Offset(size.x / 2 - 1, size.y / 2 - 1), size.x / 4, _highlightPaint);
   }
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is EnemyComponent) {
+      AudioManager.playHit();
       other.takeDamage(damage);
       removeFromParent();
     }

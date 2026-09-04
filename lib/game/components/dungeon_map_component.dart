@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -6,54 +7,77 @@ class DungeonMapComponent extends PositionComponent {
   static const double mapHeight = 1600;
   static const double tileSize = 80;
 
+  ui.Picture? _cachedMapPicture;
+
   DungeonMapComponent()
       : super(
           position: Vector2.zero(),
           size: Vector2(mapWidth, mapHeight),
-          priority: -10, // Renderizar al fondo
+          priority: -10,
         );
 
   @override
-  void render(Canvas canvas) {
-    super.render(canvas);
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _cacheMap();
+  }
 
-    // Fondo oscuro de mazmorra
-    final bgPaint = Paint()..color = const Color(0xFF10141E);
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, size.y), bgPaint);
+  void _cacheMap() {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, mapWidth, mapHeight));
 
-    // Baldosas de piedra con cuadrícula estilizada
-    final tileBorderPaint = Paint()
-      ..color = const Color(0xFF1E2638)
+    // 1. Fondo oscuro
+    final bgPaint = Paint()..color = const Color(0xFF0F1420);
+    canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), bgPaint);
+
+    // 2. Baldosas grabadas una sola vez en la GPU
+    final tilePaint = Paint()
+      ..color = const Color(0xFF1B2336)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    for (double x = 0; x < size.x; x += tileSize) {
-      for (double y = 0; y < size.y; y += tileSize) {
-        canvas.drawRect(Rect.fromLTWH(x, y, tileSize, tileSize), tileBorderPaint);
+    final runePaint = Paint()
+      ..color = const Color(0x1200E5FF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
-        // Detalles aleatorios en algunas baldosas (grietas / runas)
+    for (double x = 0; x < mapWidth; x += tileSize) {
+      for (double y = 0; y < mapHeight; y += tileSize) {
+        canvas.drawRect(Rect.fromLTWH(x, y, tileSize, tileSize), tilePaint);
+
         if ((x + y) % (tileSize * 4) == 0) {
-          final runePaint = Paint()
-            ..color = const Color(0x1400E5FF)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0;
-          canvas.drawCircle(Offset(x + tileSize / 2, y + tileSize / 2), tileSize * 0.25, runePaint);
+          canvas.drawCircle(Offset(x + tileSize / 2, y + tileSize / 2), tileSize * 0.22, runePaint);
         }
       }
     }
 
-    // Muros perimetrales luminosos (Límite del área jugable)
-    final wallGlowPaint = Paint()
-      ..color = const Color(0x66FF3D00)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12)
+    // 3. Muro perimetral luminoso sin filtros de desenfoque costosos
+    final outerWallPaint = Paint()
+      ..color = const Color(0x55FF3D00)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8;
-    canvas.drawRect(Rect.fromLTWH(4, 4, size.x - 8, size.y - 8), wallGlowPaint);
+    canvas.drawRect(const Rect.fromLTWH(4, 4, mapWidth - 8, mapHeight - 8), outerWallPaint);
 
-    final wallPaint = Paint()
+    final innerWallPaint = Paint()
       ..color = const Color(0xFFFF5722)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-    canvas.drawRect(Rect.fromLTWH(4, 4, size.x - 8, size.y - 8), wallPaint);
+      ..strokeWidth = 3;
+    canvas.drawRect(const Rect.fromLTWH(4, 4, mapWidth - 8, mapHeight - 8), innerWallPaint);
+
+    _cachedMapPicture = recorder.endRecording();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    if (_cachedMapPicture != null) {
+      canvas.drawPicture(_cachedMapPicture!);
+    }
+  }
+
+  @override
+  void onRemove() {
+    _cachedMapPicture?.dispose();
+    super.onRemove();
   }
 }
