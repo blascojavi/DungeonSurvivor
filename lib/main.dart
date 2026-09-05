@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'core/ad_manager.dart';
 import 'core/audio_manager.dart';
 import 'data/database/database.dart';
 import 'data/repositories/game_repository.dart';
-import 'screens/main_menu_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,9 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
+
+  // Inicializar Google Mobile Ads (AdMob)
+  await AdManager.initialize();
 
   // Inicializar Base de Datos Local SQLite (Drift)
   final database = AppDatabase();
@@ -86,7 +90,7 @@ class _DungeonSurvivorAppState extends State<DungeonSurvivorApp> with WidgetsBin
           surface: Color(0xFF141A29),
         ),
       ),
-      home: MainMenuScreen(repository: widget.repository),
+      home: SplashScreen(repository: widget.repository),
     );
   }
 }
