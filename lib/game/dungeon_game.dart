@@ -479,10 +479,11 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
   }
 
-  void onGameOver() {
-    AudioManager.pauseBgm();
-    AudioManager.playGameOver();
-    pauseEngine();
+  bool _runResultSaved = false;
+
+  void saveCurrentRun() {
+    if (_runResultSaved) return;
+    _runResultSaved = true;
     repository.saveRunResult(
       score: score,
       survivedSeconds: elapsedTime.toInt(),
@@ -490,6 +491,13 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       goldEarned: goldEarned,
       waveReached: currentWave,
     );
+  }
+
+  void onGameOver() {
+    AudioManager.pauseBgm();
+    AudioManager.playGameOver();
+    pauseEngine();
+    saveCurrentRun();
 
     overlays.add('GameOver');
   }

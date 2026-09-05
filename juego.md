@@ -194,9 +194,10 @@ Para garantizar que el juego **nunca sufra micro-congelaciones (*frame drops*)**
        await database.activeRunDao.clearActiveRun();
      });
      ```
-3. **Al salir de la aplicación o entrar una llamada (Pausa en segundo plano):**
-   - El ciclo de vida de Flutter (`AppLifecycleState.paused`) captura el estado exacto de la partida y escribe en la tabla `active_run_state`.
-   - Cuando el usuario reabre la app, puede pulsar *"Reanudar Partida"* o *"Abandonar"*.
+3. **Al salir de la aplicación, bloquear pantalla o pulsar botón atrás:**
+   - **Botón Atrás (Android):** Interceptado mediante `PopScope(canPop: false)`. En combate pausa el juego de inmediato en vez de cerrar la ruta. Si ya está pausado, muestra confirmación antes de guardar y salir.
+   - **Bloqueo / Salida al Menú (Home):** El ciclo de vida de Flutter (`AppLifecycleState.paused / inactive`) congela el motor Flame y silencia la música a través de `WidgetsBindingObserver`.
+   - **Salida Voluntaria desde Pausa:** Llama a `game.saveCurrentRun()` para consolidar el oro y bajas acumuladas en SQLite antes de volver al menú.
 
 ### 5.2. Protección e Integridad Local
 Para evitar que un usuario manipule fácilmente las monedas locales modificando el archivo `.db`:

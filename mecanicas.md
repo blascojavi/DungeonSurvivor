@@ -19,6 +19,16 @@ El juego cuenta con un sistema de **Joystick virtual flotante** que se adapta a 
 - **A / Flecha Izquierda:** Mover hacia la izquierda.
 - **D / Flecha Derecha:** Mover hacia la derecha.
 
+### 1.3. Protección del Botón Atrás y Pausa Automática por Ciclo de Vida
+Para evitar pérdidas accidentales de progreso durante una partida:
+1. **Pulsación del Botón Atrás (Físico o Gesto de Android):**
+   - El juego intercepta el evento del sistema mediante `PopScope`.
+   - **En combate activo:** Pausa inmediatamente el motor del juego y la música, desplegando el menú de Pausa en lugar de salir abruptamente de la partida.
+   - **En menú de pausa:** Si el jugador vuelve a pulsar atrás, se muestra un diálogo de confirmación (*¿Abandonar partida?*). Si confirma la salida, el oro, las bajas y la puntuación obtenidas se guardan de forma atómica en SQLite antes de regresar al menú principal.
+2. **Bloqueo de Pantalla y Botón de Inicio (Home / Redondo):**
+   - El juego monitoriza el ciclo de vida de la aplicación con `WidgetsBindingObserver`.
+   - Al bloquear el móvil, pulsar el botón de inicio o cambiar a otra app (`AppLifecycleState.paused / inactive`), el combate y la música se congelan automáticamente. Al desbloquear o regresar, la partida espera pausada sin que los monstruos hayan avanzado ni causado daño.
+
 ---
 
 ## 2. Bucle de Combate y Disparo Automático (*Auto-Target*)

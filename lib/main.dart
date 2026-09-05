@@ -41,10 +41,37 @@ void main() async {
   runApp(DungeonSurvivorApp(repository: repository));
 }
 
-class DungeonSurvivorApp extends StatelessWidget {
+class DungeonSurvivorApp extends StatefulWidget {
   final GameRepository repository;
 
   const DungeonSurvivorApp({super.key, required this.repository});
+
+  @override
+  State<DungeonSurvivorApp> createState() => _DungeonSurvivorAppState();
+}
+
+class _DungeonSurvivorAppState extends State<DungeonSurvivorApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      AudioManager.pauseBgm();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +86,7 @@ class DungeonSurvivorApp extends StatelessWidget {
           surface: Color(0xFF141A29),
         ),
       ),
-      home: MainMenuScreen(repository: repository),
+      home: MainMenuScreen(repository: widget.repository),
     );
   }
 }
