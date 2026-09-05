@@ -915,7 +915,11 @@
           </div>
           <div class="timeline-step" onclick="selectWave(10)">
             <div class="wave-num">Oleada 10 💀</div>
-            <div class="wave-time">06:45+</div>
+            <div class="wave-time">06:45 - 07:30</div>
+          </div>
+          <div class="timeline-step" onclick="selectWave(15)">
+            <div class="wave-num">Oleada 15 👑👑</div>
+            <div class="wave-time">10:30+ (x2 Jefes)</div>
           </div>
         </div>
 
@@ -937,7 +941,7 @@
   <section id="bestiario">
     <div class="container">
       <h2 class="section-title">BESTIARIO DE LA MAZMORRA</h2>
-      <p class="section-desc">Monstruos de pesadilla con sprites pixel-art originales y comportamientos diferenciados.</p>
+      <p class="section-desc">Monstruos de pesadilla con estadísticas rebalanceadas y hordas masivas de 60 a 120 criaturas.</p>
 
       <div class="bestiary-grid">
         <!-- Murciélago -->
@@ -945,14 +949,14 @@
           <div class="enemy-sprite-container">
             <img src="assets/images/bat.png" alt="Murciélago Espectral" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(186, 104, 200, 0.15); color: #BA68C8;">Enjambre Rápido</span>
+          <span class="enemy-badge" style="background: rgba(186, 104, 200, 0.15); color: #BA68C8;">Enjambre (25-35 en Oleada 1)</span>
           <h4>Murciélago Espectral</h4>
           <div class="enemy-stats">
-            <span>HP: 20</span>
+            <span>HP: 45</span>
             <span>VEL: 100 px/s</span>
             <span>EXP: 15</span>
           </div>
-          <p>Monstruo ágil y volador que ataca en manadas veloces para intentar acorralarte.</p>
+          <p>Monstruo ágil y volador que ataca en enjambres masivos para abrumar tu espacio de esquive.</p>
         </div>
 
         <!-- Esqueleto -->
@@ -960,10 +964,10 @@
           <div class="enemy-sprite-container">
             <img src="assets/images/skeleton.png" alt="Guerrero Esqueleto" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(207, 216, 220, 0.15); color: #CFD8DC;">Equilibrado</span>
+          <span class="enemy-badge" style="background: rgba(207, 216, 220, 0.15); color: #CFD8DC;">Infantería (15-25 en Oleada 1)</span>
           <h4>Guerrero Esqueleto</h4>
           <div class="enemy-stats">
-            <span>HP: 45</span>
+            <span>HP: 65</span>
             <span>VEL: 65 px/s</span>
             <span>EXP: 30</span>
           </div>
@@ -975,10 +979,10 @@
           <div class="enemy-sprite-container">
             <img src="assets/images/brute.png" alt="Bruto Demoníaco" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(239, 83, 80, 0.15); color: #EF5350;">Tanque Pesado</span>
+          <span class="enemy-badge" style="background: rgba(239, 83, 80, 0.15); color: #EF5350;">Tanque (5-9 en Oleada 1)</span>
           <h4>Bruto Demoníaco</h4>
           <div class="enemy-stats">
-            <span>HP: 120</span>
+            <span>HP: 160</span>
             <span>VEL: 40 px/s</span>
             <span>EXP: 80</span>
           </div>
@@ -990,10 +994,10 @@
           <div class="enemy-sprite-container">
             <img src="assets/images/cultist.png" alt="Mago Cultista" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(0, 229, 255, 0.15); color: var(--secondary);">Nuevo (Oleada 3+)</span>
+          <span class="enemy-badge" style="background: rgba(0, 229, 255, 0.15); color: var(--secondary);">Distancia (Oleada 3+)</span>
           <h4>Mago Cultista</h4>
           <div class="enemy-stats">
-            <span>HP: 40</span>
+            <span>HP: 70</span>
             <span>VEL: 55 px/s</span>
             <span>DISPARO: 2.5s</span>
           </div>
@@ -1005,10 +1009,10 @@
           <div class="enemy-sprite-container">
             <img src="assets/images/bomber.png" alt="Duende Bomba" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(255, 145, 0, 0.15); color: #FF9100;">Nuevo (Oleada 3+)</span>
+          <span class="enemy-badge" style="background: rgba(255, 145, 0, 0.15); color: #FF9100;">Explosivo (Oleada 3+)</span>
           <h4>Duende Bomba</h4>
           <div class="enemy-stats">
-            <span>HP: 24</span>
+            <span>HP: 55</span>
             <span>VEL: 130 px/s</span>
             <span>EXPLOSIÓN: Área</span>
           </div>
@@ -1020,14 +1024,14 @@
           <div class="enemy-sprite-container" style="background: rgba(255, 23, 68, 0.15);">
             <img src="assets/images/boss.png" alt="Lord Malakor" class="pixel-art">
           </div>
-          <span class="enemy-badge" style="background: rgba(255, 23, 68, 0.2); color: #FF1744;">Jefe (Oleadas 5 & 10)</span>
+          <span class="enemy-badge" style="background: rgba(255, 23, 68, 0.2); color: #FF1744;">Jefe (Oleada 15+ x2)</span>
           <h4 style="color: #FF1744;">Lord Malakor</h4>
           <div class="enemy-stats" style="color: #FF8A80;">
-            <span>HP: 480</span>
+            <span>HP: 780</span>
             <span>VEL: 45 px/s</span>
             <span>EXP: 350+</span>
           </div>
-          <p>Señor del Abismo con cuernos de fuego. Lanza ráfagas triples de magia y al morir libera un festín legendario.</p>
+          <p>Señor del Abismo con cuernos de fuego. Ráfagas triples en abanico. ¡A partir de la oleada 15 se duplican (x2) en cada aparición!</p>
         </div>
       </div>
     </div>
@@ -1140,14 +1144,20 @@
       },
       5: {
         title: "Oleada 5: ¡Aparición del Jefe Lord Malakor!",
-        desc: "Tiempo: 03:00 a 03:45. Resuena el rugido del abismo y aparece la barra de salud superior. Dispara ráfagas triples de fuego. ¡Suelta 400 EXP y oro legendario!",
-        badge: "👑 JEFE DE MAZMORRA · Lord Malakor (480 HP)",
+        desc: "Tiempo: 03:00 a 03:45. Resuena el rugido del abismo y aparece la barra de salud superior. Dispara ráfagas triples de fuego. ¡780 HP base y botín legendario!",
+        badge: "👑 JEFE DE MAZMORRA · Lord Malakor (780 HP)",
         img: "assets/images/boss.png"
       },
       10: {
         title: "Oleada 10: Lord Malakor Enfurecido",
-        desc: "Tiempo: 06:45+. Segunda llegada del Jefe con +50% de velocidad y daño aumentado. El reto supremo de supervivencia.",
-        badge: "💀 RETO SUPREMO · Lord Malakor Enfurecido",
+        desc: "Tiempo: 06:45 a 07:30. Segunda llegada del Jefe con mayor velocidad, daño aumentado y horda pesada de apoyo.",
+        badge: "💀 JEFE REFORZADO · Lord Malakor",
+        img: "assets/images/boss.png"
+      },
+      15: {
+        title: "Oleada 15: ¡Multiplicación de Jefes Malakor (x2)!",
+        desc: "Tiempo: 10:30+. Se desata el poder del abismo y aparecen <strong>2 Lord Malakors simultáneos</strong>. ¡En cada oleada de jefe posterior se duplica el número de Malakors (4 en la 20, 8 en la 25...)!",
+        badge: "👑👑 MULTI-JEFE · 2x Lord Malakor (780 HP c/u)",
         img: "assets/images/boss.png"
       }
     };

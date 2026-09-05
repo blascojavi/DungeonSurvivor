@@ -40,19 +40,26 @@ El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros p
 ### 3.1. Tipos de Enemigos y Bestiario
 | Monstruo | Vida Base | Velocidad | Daño Contacto | EXP | Probabilidad Oro | Comportamiento Especial |
 |---|:---:|:---:|:---:|:---:|:---:|---|
-| 🦇 **Murciélago Espectral** | 20 HP | 100 px/s | 8 | 15 EXP | 25% | Muy rápido, ágil y de baja salud. Embiste en bandada. |
-| 💀 **Guerrero Esqueleto** | 45 HP | 65 px/s | 14 | 30 EXP | 50% | Enemigo estándar equilibrado con ojos dorados. |
-| 👹 **Bruto Demoníaco** | 120 HP | 40 px/s | 25 | 80 EXP | 90% | Minijefe pesado, resiste muchos impactos y hace gran daño. |
-| 🔮 **Mago Cultista (Oleada 3+)** | 40 HP | 55 px/s | 12 | 40 EXP | 40% | Guarda distancia media y dispara orbes mágicos dañinos cada 2.5s. |
-| 💣 **Duende Bomba (Oleada 3+)** | 24 HP | 130 px/s | 10 | 25 EXP | 35% | Corre frenéticamente con una bomba y estalla al morir dañando en área. |
-| 👑 **Lord Malakor - Señor del Abismo (Jefe Oleada 5 y 10)** | 480 HP | 45 px/s | 30 | 350 EXP | 100% | Colosal demonio acorazado con cuernos ardientes. Lanza ráfagas triples de proyectiles en abanico. Al ser derrotado libera un festín legendario de gemas y oro. |
+| 🦇 **Murciélago Espectral** | **45 HP** | 100 px/s | 8 | 15 EXP | 25% | Muy rápido, ágil y agresivo. Embiste en bandadas masivas (25-35 simultáneos en Oleada 1). |
+| 💀 **Guerrero Esqueleto** | **65 HP** | 65 px/s | 14 | 30 EXP | 50% | Infantería no-muerta equilibrada con ojos dorados (15-25 simultáneos en Oleada 1). |
+| 👹 **Bruto Demoníaco** | **160 HP** | 40 px/s | 25 | 80 EXP | 90% | Minijefe tanque pesado, resiste muchos impactos y otorga gran oro (5-9 simultáneos en Oleada 1). |
+| 🔮 **Mago Cultista (Oleada 3+)** | **70 HP** | 55 px/s | 12 | 40 EXP | 40% | Guarda distancia media y dispara orbes mágicos oscuros cada 2.5s. |
+| 💣 **Duende Bomba (Oleada 3+)** | **55 HP** | 130 px/s | 10 | 25 EXP | 35% | Corre frenéticamente con una bomba y estalla al morir dañando en área. |
+| 👑 **Lord Malakor - Señor del Abismo (Jefe)** | **780 HP** | 45 px/s | 30 | 350 EXP | 100% | Colosal demonio acorazado con cuernos ardientes. Lanza ráfagas triples de proyectiles en abanico. ¡A partir de la oleada 15 se duplica en cada aparición (x2)! |
 
-### 3.2. Progresión Temporal de Dificultad y Jefes de Oleada
-- Cada **45 segundos** de supervivencia, el nivel de oleada aumenta (`Oleada = (Tiempo / 45) + 1`).
-- **Escalado de salud y daño:** `Multiplicador = 1.0 + (Oleada - 1) * 0.18`.
-- **Oleadas 1-2:** Monstruos introductorios (murciélagos, esqueletos, brutos).
-- **Oleada 3 en adelante:** La composición enemiga se diversifica incorporando Magos Cultistas y Duendes Bomba.
-- **Oleadas 5 y 10 (Jefe de Mazmorra):** Aparece con rugido de alerta **Lord Malakor**. Se activa la barra de vida de jefe superior en el HUD.
+### 3.2. Límites Simultáneos y Progresión por Oleadas
+- **Límite Mínimo y Máximo Dinámico (`maxEnemies`):**
+  - **Oleada 1:** Diseñada para albergar entre **25 y 35 Murciélagos**, **15 y 25 Esqueletos** y **5 y 9 Brutos** simultáneos. Capacidad total: **70 monstruos** (siempre mayor a 60).
+  - **Oleada 2 (+50% simultáneos):** ~45 Murciélagos, ~30 Esqueletos y ~10 Brutos (Capacidad total: **95 monstruos**).
+  - **Oleada 3 en adelante:** La composición se enriquece con Magos Cultistas y Duendes Bomba, escalando progresivamente hasta **125 monstruos simultáneos** para no saturar la GPU ni la memoria y garantizar 60/120 FPS fluidos.
+- **Multiplicación de Jefes (Lord Malakor x2 desde Oleada 15):**
+  - **Oleada 5:** 1 Lord Malakor (780 HP base).
+  - **Oleada 10:** 1 Lord Malakor (+dificultad acumulada).
+  - **Oleada 15:** ¡Se activa la multiplicación! Aparecen **2 Lord Malakors simultáneos**.
+  - **Oleada 20:** Aparecen **4 Lord Malakors simultáneos** (x2).
+  - **Oleada 25:** Aparecen **8 Lord Malakors simultáneos** (x2).
+  - **Oleada 30:** Aparecen **16 Lord Malakors simultáneos** (x2).
+  - El HUD superior muestra el nombre dinámico (*LORD MALAKOR xN - SEÑORES DEL ABISMO*) y promedia su salud total en tiempo real.
 
 ---
 
@@ -75,15 +82,17 @@ El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros p
 
 Cada oleada de la mazmorra dura exactamente **45 segundos** de tiempo real:
 
-| Oleada | Tiempo de Partida | Enemigos en Combate | Comportamiento y Retos |
+| Oleada | Tiempo de Partida | Composición y Simultáneos | Desafíos y Jefes |
 |---|:---:|---|---|
-| **Oleada 1** | `00:00 - 00:45` | Murciélagos espectrales y Esqueletos | Fase de aclimatación. Recolección de gemas iniciales para los primeros 2 niveles. |
-| **Oleada 2** | `00:45 - 01:30` | Murciélagos, Esqueletos y primeros Brutos | Aumenta la densidad de aparición y el primer minijefe resistente. |
-| **Oleada 3** 🔥 | **`01:30` (Minuto 1:30)** | **Aparición de Magos Cultistas y Duendes Bomba** | Se desbloquean los ataques a distancia y los enemigos suicidas explosivos. Representan ~40% de los spawns. |
-| **Oleada 4** | `02:15 - 03:00` | Asedio combinado con alta densidad | Obliga al jugador a priorizar objetivos (eliminar magos o detonar duendes lejos). |
-| **Oleada 5** 👑 | **`03:00` (Minuto 3:00)** | **Aparición de Lord Malakor (Jefe)** | Rugido de advertencia (`boss_roar.wav`), barra de salud superior en el HUD y ráfagas triples de fuego. |
-| **Oleadas 6-9** | `03:45 - 06:45` | Escalado de dificultad continuo (`+18% HP/daño` por oleada) | Máxima intensidad con hordas veloces de cultistas y bombarderos. |
-| **Oleada 10** 💀 | **`06:45` (Minuto 6:45)** | **Lord Malakor Enfurecido** | Multiplicador de 1.5x en estadísticas, velocidad incrementada y recompensa titánica. |
+| **Oleada 1** | `00:00 - 00:45` | 25-35 Murciélagos, 15-25 Esqueletos, 5-9 Brutos | Horda inicial masiva (~57-65 en pantalla, máx 70). Gran flujo de gemas. |
+| **Oleada 2** | `00:45 - 01:30` | +50% simultáneos (~45 Murciélagos, ~30 Esqueletos, ~10 Brutos) | Enjambre reforzado (~85 en pantalla, máx 95). |
+| **Oleada 3** 🔥 | **`01:30`** | Se incorporan Magos Cultistas y Duendes Bomba | Ataques a distancia y explosiones en área kamikazes. |
+| **Oleada 4** | `02:15 - 03:00` | Asedio táctico combinado con cultistas y bombas | Preparación para el primer jefe. |
+| **Oleada 5** 👑 | **`03:00`** | **1 Lord Malakor (780 HP)** + Horda de soporte | Rugido, barra de salud superior en el HUD y ráfagas en abanico. |
+| **Oleada 10** 💀 | **`06:45`** | **1 Lord Malakor Reforzado** + Horda masiva | Mayor velocidad y daño. |
+| **Oleada 15** 👑👑 | **`10:30`** | **2 Lord Malakors simultáneos** | ¡Primer multiplicador de jefes! Barra combinada en el HUD. |
+| **Oleada 20** 💀💀 | **`14:15`** | **4 Lord Malakors simultáneos (x2)** | Caos infernal de proyectiles en abanico y festín de gemas gigantes. |
+| **Oleada 25** 🔥 | **`18:00`** | **8 Lord Malakors simultáneos (x2)** | Reto titánico extremo. |
 
 ---
 

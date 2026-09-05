@@ -48,7 +48,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.bat,
-      maxHp: 20 * difficultyMultiplier,
+      maxHp: 45 * difficultyMultiplier,
       speed: 100,
       contactDamage: 8 * difficultyMultiplier,
       expValue: 15,
@@ -62,7 +62,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.skeleton,
-      maxHp: 45 * difficultyMultiplier,
+      maxHp: 65 * difficultyMultiplier,
       speed: 65,
       contactDamage: 14 * difficultyMultiplier,
       expValue: 30,
@@ -76,7 +76,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.brute,
-      maxHp: 120 * difficultyMultiplier,
+      maxHp: 160 * difficultyMultiplier,
       speed: 40,
       contactDamage: 25 * difficultyMultiplier,
       expValue: 80,
@@ -90,7 +90,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.cultist,
-      maxHp: 40 * difficultyMultiplier,
+      maxHp: 70 * difficultyMultiplier,
       speed: 55,
       contactDamage: 12 * difficultyMultiplier,
       expValue: 40,
@@ -104,7 +104,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.bomber,
-      maxHp: 24 * difficultyMultiplier,
+      maxHp: 55 * difficultyMultiplier,
       speed: 130, // Rápido y errático
       contactDamage: 10 * difficultyMultiplier,
       expValue: 25,
@@ -118,7 +118,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     return EnemyComponent._(
       position: position,
       type: EnemyType.boss,
-      maxHp: 480 * difficultyMultiplier,
+      maxHp: 780 * difficultyMultiplier,
       speed: 45,
       contactDamage: 30 * difficultyMultiplier,
       expValue: 350,
@@ -134,13 +134,16 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     game.activeEnemies.add(this);
     if (type == EnemyType.boss) {
       AudioManager.playBossRoar();
-      game.onBossSpawned(hp, maxHp);
+      game.updateBossHud();
     }
   }
 
   @override
   void onRemove() {
     game.activeEnemies.remove(this);
+    if (type == EnemyType.boss) {
+      game.updateBossHud();
+    }
     super.onRemove();
   }
 
@@ -281,7 +284,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     _flashTimer = 0.08;
 
     if (type == EnemyType.boss) {
-      game.onBossHpChanged(hp, maxHp);
+      game.updateBossHud();
     }
 
     if (hp <= 0) {
@@ -299,7 +302,6 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
 
     // Si es el Jefe, recompensa legendaria masiva
     if (type == EnemyType.boss) {
-      game.onBossDefeated();
       for (int i = 0; i < 4; i++) {
         game.spawnGem(position + Vector2((i - 1.5) * 20.0, 0), GemType.exp, 100);
         game.spawnGem(position + Vector2((i - 1.5) * 20.0, 20.0), GemType.gold, 30);

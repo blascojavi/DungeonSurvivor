@@ -23,8 +23,12 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   // Pools controlados para máximo rendimiento
   final List<EnemyComponent> activeEnemies = [];
   final List<GemComponent> activeGems = [];
-  static const int maxEnemies = 32;
-  static const int maxGems = 32;
+  int get currentMaxEnemies {
+    if (currentWave == 1) return 70; // Mayor que 60 como pide el usuario
+    if (currentWave == 2) return 95;
+    return (95 + (currentWave - 2) * 8).clamp(95, 125);
+  }
+  static const int maxGems = 64;
   static final Random _random = Random();
 
   // Sprites cacheados en memoria para no decodificar imágenes en caliente
@@ -38,9 +42,18 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   // Cola de niveles pendientes para evitar bloqueos del Overlay al ganar mucha EXP
   int pendingLevelUps = 0;
 
-  // Estado y alertas de Jefes de Oleada
-  bool _bossSpawnedWave5 = false;
-  bool _bossSpawnedWave10 = false;
+  // Registro de oleadas de Jefes ya generadas
+  final Set<int> _spawnedBossWaves = {};
+
+  int getBossCountForWave(int wave) {
+    if (wave < 5 || wave % 5 != 0) return 0;
+    if (wave < 15) return 1; // Oleadas 5 y 10: 1 jefe
+    // A partir de la oleada 15, en cada oleada posterior multiplica x2:
+    // Oleada 15 = 2, Oleada 20 = 4, Oleada 25 = 8, Oleada 30 = 16...
+    final stepsAfter15 = ((wave - 15) / 5).floor();
+    return (2 * pow(2, stepsAfter15)).toInt();
+  }
+
   final ValueNotifier<bool> isBossAliveNotifier = ValueNotifier(false);
   final ValueNotifier<String> bossNameNotifier = ValueNotifier('LORD MALAKOR - SEÑOR DEL ABISMO');
   final ValueNotifier<double> bossHpNotifier = ValueNotifier(1.0);
@@ -172,7 +185,14 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
     // Dificultad progresiva por oleadas (cada 45 segundos sube de oleada)
     currentWave = (elapsedTime / 45).floor() + 1;
-    _spawnInterval = (2.0 - (currentWave * 0.12)).clamp(0.45, 2.0);
+
+    // Aceleración adaptativa de spawn para mantener los simultáneos requeridos
+    final targetPopulation = currentWave == 1 ? 57 : (currentWave == 2 ? 85 : 105);
+    if (activeEnemies.length < targetPopulation * 0.75) {
+      _spawnInterval = 0.22; // Inundación rápida hasta llenar la arena
+    } else {
+      _spawnInterval = 0.65; // Mantenimiento sostenido
+    }
 
     // Generador de oleadas de enemigos
     _spawnTimer += dt;
@@ -192,53 +212,137 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void _spawnEnemyWave() {
-    if (activeEnemies.length >= maxEnemies) {
-      return; // Límite estricto de entidades para asegurar 60/120 FPS sin tirones
-    }
+    // Invocación del Jefe de Mazmorra en Oleadas múltiples de 5 (5, 10, 15, 20, 25...)
+    // A partir de la oleada 15, cada oleada de jefe posterior multiplica los jefes Malakor x2
+    if (currentWave >= 5 && currentWave % 5 == 0 && !_spawnedBossWaves.contains(currentWave)) {
+      _spawnedBossWaves.add(currentWave);
+      final bossCount = getBossCountForWave(currentWave);
+      final bossDifficultyMultiplier = 1.0 + (currentWave - 1) * 0.12;
 
-    // Invocación del Jefe de Mazmorra en Oleadas 5 y 10
-    if (currentWave >= 5 && !_bossSpawnedWave5) {
-      _bossSpawnedWave5 = true;
-      world.add(EnemyComponent.boss(getRandomSpawnPosition(), 1.0, bossSprite));
+      for (int i = 0; i < bossCount; i++) {
+        final angle = (2 * pi / bossCount) * i + _random.nextDouble() * 0.3;
+        const spawnDistance = 560.0;
+        final pos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
+        pos.x = pos.x.clamp(60.0, DungeonMapComponent.mapWidth - 60.0);
+        pos.y = pos.y.clamp(60.0, DungeonMapComponent.mapHeight - 60.0);
+        world.add(EnemyComponent.boss(pos, bossDifficultyMultiplier, bossSprite));
+      }
       return;
     }
-    if (currentWave >= 10 && !_bossSpawnedWave10) {
-      _bossSpawnedWave10 = true;
-      world.add(EnemyComponent.boss(getRandomSpawnPosition(), 1.5, bossSprite));
-      return;
+
+    if (activeEnemies.length >= currentMaxEnemies) {
+      return; // Límite dinámico de entidades para asegurar 60/120 FPS sin saturar
     }
 
-    final spawnPos = getRandomSpawnPosition();
+    // Generación por lote si hay déficit grande para alcanzar rápido los simultáneos
+    final batchCount = (activeEnemies.length < currentMaxEnemies - 15) ? 2 : 1;
     final difficultyMultiplier = 1.0 + (currentWave - 1) * 0.18;
 
-    final roll = _random.nextInt(100);
-    EnemyComponent enemy;
-
-    if (currentWave < 3) {
-      // Oleadas 1 y 2: Enemigos introductorios
-      if (roll < 55) {
-        enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
-      } else if (roll < 85) {
-        enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
-      } else {
-        enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+    for (int b = 0; b < batchCount; b++) {
+      if (activeEnemies.length >= currentMaxEnemies) break;
+      final spawnPos = getRandomSpawnPosition();
+      final typeToSpawn = _selectNextEnemyType();
+      EnemyComponent enemy;
+      switch (typeToSpawn) {
+        case EnemyType.bat:
+          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+          break;
+        case EnemyType.skeleton:
+          enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+          break;
+        case EnemyType.brute:
+          enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+          break;
+        case EnemyType.cultist:
+          enemy = EnemyComponent.cultist(spawnPos, difficultyMultiplier, cultistSprite);
+          break;
+        case EnemyType.bomber:
+          enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite);
+          break;
+        case EnemyType.boss:
+          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+          break;
       }
-    } else {
-      // Oleada 3+: Se incorporan Magos Cultistas a distancia y Duendes Bomba
-      if (roll < 26) {
-        enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
-      } else if (roll < 48) {
-        enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
-      } else if (roll < 62) {
-        enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
-      } else if (roll < 82) {
-        enemy = EnemyComponent.cultist(spawnPos, difficultyMultiplier, cultistSprite);
-      } else {
-        enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite);
+      world.add(enemy);
+    }
+  }
+
+  EnemyType _selectNextEnemyType() {
+    int bats = 0;
+    int skeletons = 0;
+    int brutes = 0;
+    int cultists = 0;
+    int bombers = 0;
+
+    for (final e in activeEnemies) {
+      switch (e.type) {
+        case EnemyType.bat:
+          bats++;
+          break;
+        case EnemyType.skeleton:
+          skeletons++;
+          break;
+        case EnemyType.brute:
+          brutes++;
+          break;
+        case EnemyType.cultist:
+          cultists++;
+          break;
+        case EnemyType.bomber:
+          bombers++;
+          break;
+        case EnemyType.boss:
+          break;
       }
     }
 
-    world.add(enemy);
+    int targetBats;
+    int targetSkeletons;
+    int targetBrutes;
+    int targetCultists = 0;
+    int targetBombers = 0;
+
+    if (currentWave == 1) {
+      // Murciélagos: 25 a 35 (centro 30)
+      // Esqueletos: 15 a 25 (centro 20)
+      // Brutos: 5 a 9 (centro 7)
+      targetBats = 30;
+      targetSkeletons = 20;
+      targetBrutes = 7;
+    } else if (currentWave == 2) {
+      // Aumenta un 50% los simultáneos de cada uno
+      targetBats = 45; // 30 * 1.5
+      targetSkeletons = 30; // 20 * 1.5
+      targetBrutes = 10; // 7 * 1.5 ≈ 10
+    } else {
+      // Oleada 3+: Escala incorporando Magos Cultistas y Duendes Bomba
+      final waveBonus = (currentWave - 3) * 2;
+      targetBats = (38 + waveBonus).clamp(25, 45);
+      targetSkeletons = (25 + waveBonus).clamp(18, 32);
+      targetBrutes = (9 + (waveBonus ~/ 2)).clamp(6, 12);
+      targetCultists = (15 + waveBonus).clamp(10, 22);
+      targetBombers = (14 + waveBonus).clamp(10, 20);
+    }
+
+    final deficits = <EnemyType, int>{
+      EnemyType.bat: targetBats - bats,
+      EnemyType.skeleton: targetSkeletons - skeletons,
+      EnemyType.brute: targetBrutes - brutes,
+    };
+    if (currentWave >= 3) {
+      deficits[EnemyType.cultist] = targetCultists - cultists;
+      deficits[EnemyType.bomber] = targetBombers - bombers;
+    }
+
+    EnemyType bestType = EnemyType.bat;
+    int maxDeficit = -9999;
+    for (final entry in deficits.entries) {
+      if (entry.value > maxDeficit) {
+        maxDeficit = entry.value;
+        bestType = entry.key;
+      }
+    }
+    return bestType;
   }
 
   void spawnGem(Vector2 pos, GemType type, int value) {
@@ -256,18 +360,26 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     player.onEnemyKilled();
   }
 
-  void onBossSpawned(double hp, double maxHp) {
-    isBossAliveNotifier.value = true;
-    bossHpNotifier.value = (hp / maxHp).clamp(0.0, 1.0);
-  }
-
-  void onBossHpChanged(double hp, double maxHp) {
-    bossHpNotifier.value = (hp / maxHp).clamp(0.0, 1.0);
-  }
-
-  void onBossDefeated() {
-    isBossAliveNotifier.value = false;
-    bossHpNotifier.value = 0.0;
+  void updateBossHud() {
+    final bosses = activeEnemies.where((e) => e.type == EnemyType.boss).toList();
+    if (bosses.isEmpty) {
+      isBossAliveNotifier.value = false;
+      bossHpNotifier.value = 0.0;
+    } else {
+      isBossAliveNotifier.value = true;
+      double currentHp = 0;
+      double totalMax = 0;
+      for (final b in bosses) {
+        currentHp += b.hp;
+        totalMax += b.maxHp;
+      }
+      bossHpNotifier.value = (currentHp / totalMax).clamp(0.0, 1.0);
+      if (bosses.length == 1) {
+        bossNameNotifier.value = 'LORD MALAKOR - SEÑOR DEL ABISMO';
+      } else {
+        bossNameNotifier.value = 'LORD MALAKOR x${bosses.length} - SEÑORES DEL ABISMO';
+      }
+    }
   }
 
   void onUltimateChargeChanged(double ratio) {
