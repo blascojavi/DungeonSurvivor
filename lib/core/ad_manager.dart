@@ -30,8 +30,16 @@ class AdManager {
     return _productionBannerAdUnitIdAndroid;
   }
 
+  /// Indica si la plataforma actual soporta Google Mobile Ads (Android / iOS).
+  static bool get isSupportedPlatform =>
+      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
   /// Inicializa el SDK de Google Mobile Ads de forma segura.
   static Future<void> initialize() async {
+    if (!isSupportedPlatform) {
+      debugPrint('AdManager: Plataforma ($defaultTargetPlatform) no compatible con Google Mobile Ads. Omitiendo.');
+      return;
+    }
     if (_isInitialized) return;
     try {
       final status = await MobileAds.instance.initialize();
@@ -44,10 +52,11 @@ class AdManager {
 
   /// Crea y carga un Banner de AdMob de tamaño estándar (320x50)
   /// con gestión limpia de eventos de carga y error.
-  static BannerAd createBannerAd({
+  static BannerAd? createBannerAd({
     required void Function(Ad ad) onLoaded,
     required void Function(Ad ad, LoadAdError error) onFailed,
   }) {
+    if (!isSupportedPlatform) return null;
     final banner = BannerAd(
       adUnitId: bannerAdUnitId,
       size: AdSize.banner,
