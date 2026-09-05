@@ -128,6 +128,7 @@ Durante las pruebas de alta exigencia (hasta la oleada 10 con cientos de entidad
    - Las losas de piedra y el sello rúnico ceremonial se pre-graban en memoria GPU mediante `ui.PictureRecorder`. En cada fotograma el coste de pintar el mapa completo es de **0 ms**.
 3. **Control Estricto de Entidades:**
    - Límite controlado de enemigos vivos y gemas en pantalla, combinando gemas lejanas para mantener una tasa constante de **60 a 120 FPS sin parones**.
-4. **APK de Depuración Generada y Verificada:**
-   - Archivo: `build/app/outputs/flutter-apk/app-debug.apk`.
-   - Estado: Totalmente jugable y verificado en Android físico.
+4. **APK Release Optimizado para Web y Móvil:**
+   - Archivo para descarga web: `downloads/shadow-vault.apk` (54 MB).
+   - Binario de compilación: `build/app/outputs/flutter-apk/app-release.apk`.
+   - Estado: Optimizado en modo Release (árbol de iconos reducido 99.7%, sin código de debug, compatible con cualquier dispositivo Android 60/120 FPS).

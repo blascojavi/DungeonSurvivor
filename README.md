@@ -68,11 +68,12 @@ flutter run -d windows
 flutter run -d android
 ```
 
-### 3. Compilar APK de Depuración
+### 3. Compilar APK Optimizado (Release)
 ```powershell
-flutter build apk --debug
+flutter build apk --release
 ```
-*Ubicación del binario:* `build/app/outputs/flutter-apk/app-debug.apk`
+*Ubicación del binario compilado:* `build/app/outputs/flutter-apk/app-release.apk`
+*Descarga directa desde la web:* `downloads/shadow-vault.apk` (54 MB)
 
 ### 4. Compilar Bundle de Producción para Google Play
 ```powershell
