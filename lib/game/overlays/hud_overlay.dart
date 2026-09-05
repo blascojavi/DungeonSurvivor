@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/audio_manager.dart';
 import '../dungeon_game.dart';
 
 class HudOverlay extends StatefulWidget {
@@ -192,6 +193,26 @@ class _HudOverlayState extends State<HudOverlay> with SingleTickerProviderStateM
                           ),
                         );
                       },
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Botón de Pausa / Ajustes
+                    InkWell(
+                      onTap: () {
+                        game.pauseEngine();
+                        AudioManager.pauseBgm();
+                        game.overlays.add('Pause');
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E2638).withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(Icons.pause, color: Colors.white, size: 16),
+                      ),
                     ),
                   ],
                 ),

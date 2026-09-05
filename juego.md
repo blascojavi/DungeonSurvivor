@@ -154,7 +154,9 @@ CREATE TABLE game_settings (
     haptics_enabled BOOLEAN NOT NULL DEFAULT 1,
     damage_numbers_enabled BOOLEAN NOT NULL DEFAULT 1,
     target_frame_rate INTEGER NOT NULL DEFAULT 60,
-    language_code TEXT NOT NULL DEFAULT 'es'
+    language_code TEXT NOT NULL DEFAULT 'es',
+    is_left_handed BOOLEAN NOT NULL DEFAULT 0,
+    difficulty_mode TEXT NOT NULL DEFAULT 'nightmare'
 );
 
 -- 6. Guardado Temporal de Partida Activa (Resume State)

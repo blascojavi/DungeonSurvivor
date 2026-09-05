@@ -766,11 +766,158 @@
       color: var(--secondary);
     }
 
+    /* SELECTOR DE DIFICULTAD INTERACTIVO */
+    .diff-container {
+      background: rgba(16, 22, 36, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px 30px;
+      margin: 30px 0;
+      backdrop-filter: blur(12px);
+    }
+
+    .diff-toggle-container {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 35px;
+      flex-wrap: wrap;
+    }
+
+    .diff-tab-btn {
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(22, 30, 48, 0.6);
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .diff-tab-btn.active.novice {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--secondary);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.35);
+    }
+
+    .diff-tab-btn.active.nightmare {
+      background: rgba(255, 23, 68, 0.15);
+      border-color: var(--accent-red);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(255, 23, 68, 0.4);
+    }
+
+    .diff-specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 25px;
+    }
+
+    .diff-spec-card {
+      background: rgba(10, 15, 25, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .diff-spec-card h5 {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    .diff-spec-card .val {
+      font-family: var(--font-title);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* REPRODUCTOR BGM D&D */
+    .bgm-player-card {
+      background: linear-gradient(135deg, rgba(22, 30, 50, 0.9), rgba(12, 16, 26, 0.95));
+      border: 1px solid var(--secondary);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 35px rgba(0, 229, 255, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    .bgm-info {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .bgm-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: rgba(0, 229, 255, 0.15);
+      border: 1px solid var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    .bgm-info h3 {
+      font-size: 1.25rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .bgm-info p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .bgm-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .bgm-vol-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .bgm-vol-control input[type=range] {
+      accent-color: var(--secondary);
+      cursor: pointer;
+      width: 90px;
+    }
+
     @media (max-width: 768px) {
       h1 { font-size: 2.5rem; letter-spacing: 2px; }
       .hero-subtitle { font-size: 1.05rem; }
       header { flex-direction: column; gap: 16px; }
       .timeline-detail { flex-direction: column; text-align: center; }
+      .bgm-player-card { flex-direction: column; text-align: center; }
+      .bgm-info { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
@@ -785,10 +932,11 @@
       </a>
       <nav>
         <a href="#caracteristicas">Novedades</a>
+        <a href="#dificultad">Dificultad</a>
         <a href="#cronograma">Oleadas</a>
         <a href="#bestiario">Bestiario</a>
         <a href="#ergonomia">Controles</a>
-        <a href="#sonidos">Audio FX</a>
+        <a href="#sonidos">Banda Sonora & FX</a>
         <a href="mecanicas.md" class="btn-nav">Mecánicas .MD</a>
       </nav>
     </div>
@@ -884,6 +1032,65 @@
           <div class="feature-icon">💾</div>
           <h3>100% Offline con SQLite</h3>
           <p>Motor de persistencia Drift embebido en C++. Juega sin conexión en cualquier lugar sin gastar datos y sin cuotas de nube.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN DIFICULTAD INTERACTIVA: NOVATO VS PESADILLA -->
+  <section id="dificultad" style="background: rgba(12, 17, 28, 0.75);">
+    <div class="container">
+      <div class="badge-top" style="margin-bottom: 12px;">Nuevo en esta Actualización</div>
+      <h2 class="section-title">MODOS DE DIFICULTAD: NOVATO VS PESADILLA</h2>
+      <p class="section-desc">Selecciona tu estilo de juego en Ajustes: supervivencia clásica o pesadilla extrema con hordas brutales.</p>
+
+      <div class="diff-container">
+        <div class="diff-toggle-container">
+          <button class="diff-tab-btn" id="btnDiffNovice" onclick="setDifficultyMode('novice')">
+            🛡️ MODO NOVATO (Equilibrado)
+          </button>
+          <button class="diff-tab-btn active nightmare" id="btnDiffNightmare" onclick="setDifficultyMode('nightmare')">
+            💀 MODO PESADILLA (Hardcore)
+          </button>
+        </div>
+
+        <div id="diffModeContent">
+          <div style="text-align: center; max-width: 700px; margin: 0 auto 20px;">
+            <h3 id="diffTitle" style="font-family: var(--font-title); font-size: 1.5rem; color: #FF2A4B; margin-bottom: 8px;">
+              💀 MODO PESADILLA (¡Menudo Nivelazo!)
+            </h3>
+            <p id="diffDesc" style="color: var(--text-muted); font-size: 0.98rem; line-height: 1.6;">
+              Hordas masivas de 60 a 120 monstruos simultáneos desde el primer minuto. Monstruos reforzados con mayor salud y daño. A partir de la oleada 15, los jefes Lord Malakor se duplican (x2) en cada aparición. ¡Tienes que estar atento cada segundo!
+            </p>
+          </div>
+
+          <div class="diff-specs-grid">
+            <div class="diff-spec-card">
+              <h5>Límite Simultáneos</h5>
+              <div class="val" id="specLimit" style="color: #FF2A4B;">70 - 125</div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Monstruos en pantalla</p>
+            </div>
+            <div class="diff-spec-card">
+              <h5>Murciélago Espectral</h5>
+              <div class="val" id="specBat" style="color: #FF8A80;">45 HP</div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">25-35 en Oleada 1</p>
+            </div>
+            <div class="diff-spec-card">
+              <h5>Guerrero Esqueleto</h5>
+              <div class="val" id="specSkeleton" style="color: #CFD8DC;">65 HP</div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">15-25 en Oleada 1</p>
+            </div>
+            <div class="diff-spec-card">
+              <h5>Bruto Demoníaco</h5>
+              <div class="val" id="specBrute" style="color: #FF5252;">160 HP</div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">5-9 en Oleada 1</p>
+            </div>
+            <div class="diff-spec-card">
+              <h5>Lord Malakor (Boss)</h5>
+              <div class="val" id="specBoss" style="color: #FF1744;">780 HP</div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Multiplicador x2 desde Ol 15</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1063,11 +1270,36 @@
     </div>
   </section>
 
-  <!-- SECCIÓN SOUNDBOARD AUDIO FX WEB AUDIO -->
+  <!-- SECCIÓN BANDA SONORA D&D & SOUNDBOARD -->
   <section id="sonidos">
     <div class="container">
-      <h2 class="section-title">SISTEMA DE AUDIO NATIVO</h2>
-      <p class="section-desc">Efectos sintetizados de baja latencia gestionados mediante <code>AudioPool</code>. ¡Pulsa para escucharlos en vivo!</p>
+      <h2 class="section-title">BANDA SONORA D&D & AUDIO NATIVO</h2>
+      <p class="section-desc">Ambientación oscura de fantasía en Re menor con percusión ceremonial y efectos sintetizados de baja latencia con <code>AudioPool</code>.</p>
+
+      <!-- Reproductor BGM D&D -->
+      <div class="bgm-player-card">
+        <div class="bgm-info">
+          <div class="bgm-icon">🎵</div>
+          <div>
+            <h3 style="font-family: var(--font-title); letter-spacing: 1px;">Banda Sonora D&D: "Shadow Vault Theme"</h3>
+            <p>Tonalidad Re menor (D minor) · Bordón ancestral, tambores de guerra cavernarios y campana arcana.</p>
+          </div>
+        </div>
+        <div class="bgm-controls">
+          <button id="btnPlayBgm" class="btn-primary" onclick="toggleBgm()" style="padding: 12px 24px; font-size: 0.95rem; cursor: pointer;">
+            <span id="bgmPlayIcon">▶️</span> <span id="bgmPlayText">Escuchar Banda Sonora</span>
+          </button>
+          <div class="bgm-vol-control">
+            <span>🔊</span>
+            <input type="range" id="bgmVolSlider" min="0" max="1" step="0.05" value="0.7" oninput="setBgmVolume(this.value)">
+            <span id="bgmVolLabel" style="font-size: 0.85rem; font-weight: bold; color: var(--secondary);">70%</span>
+          </div>
+        </div>
+        <audio id="dndAudio" src="assets/audio/bgm_dungeon.wav" loop></audio>
+      </div>
+
+      <h3 style="text-align: center; font-size: 1.2rem; color: #fff; margin-bottom: 8px; font-family: var(--font-title); letter-spacing: 1.5px;">Efectos de Sonido (SFX)</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">Pulsa cada botón para reproducir el efecto en tiempo real:</p>
 
       <div class="soundboard-grid">
         <button class="sound-btn" onclick="playSfx('shoot')">
@@ -1297,6 +1529,79 @@
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.65);
+      }
+    }
+
+    // 4. Selector de Dificultad (Novato vs Pesadilla)
+    function setDifficultyMode(mode) {
+      const btnNovice = document.getElementById('btnDiffNovice');
+      const btnNightmare = document.getElementById('btnDiffNightmare');
+      const diffTitle = document.getElementById('diffTitle');
+      const diffDesc = document.getElementById('diffDesc');
+      const specLimit = document.getElementById('specLimit');
+      const specBat = document.getElementById('specBat');
+      const specSkeleton = document.getElementById('specSkeleton');
+      const specBrute = document.getElementById('specBrute');
+      const specBoss = document.getElementById('specBoss');
+
+      if (mode === 'novice') {
+        btnNovice.className = 'diff-tab-btn active novice';
+        btnNightmare.className = 'diff-tab-btn';
+        diffTitle.innerHTML = '🛡️ MODO NOVATO (Supervivencia Clásica)';
+        diffTitle.style.color = 'var(--secondary)';
+        diffDesc.innerHTML = 'Ritmo equilibrado y accesible. Monstruos con vidas reducidas originales. Límite de hasta 32 enemigos en pantalla y un único Jefe Lord Malakor en las oleadas de boss. Perfecto para aprender las mecánicas y disfrutar de la progresión.';
+        specLimit.innerText = '32 Máx';
+        specLimit.style.color = 'var(--secondary)';
+        specBat.innerText = '20 HP';
+        specSkeleton.innerText = '45 HP';
+        specBrute.innerText = '120 HP';
+        specBoss.innerText = '480 HP';
+        specBoss.style.color = 'var(--secondary)';
+      } else {
+        btnNovice.className = 'diff-tab-btn';
+        btnNightmare.className = 'diff-tab-btn active nightmare';
+        diffTitle.innerHTML = '💀 MODO PESADILLA (¡Menudo Nivelazo!)';
+        diffTitle.style.color = '#FF2A4B';
+        diffDesc.innerHTML = 'Hordas masivas de 60 a 120 monstruos simultáneos desde el primer minuto. Monstruos reforzados con mayor salud y daño. A partir de la oleada 15, los jefes Lord Malakor se duplican (x2) en cada aparición. ¡Tienes que estar atento cada segundo!';
+        specLimit.innerText = '70 - 125';
+        specLimit.style.color = '#FF2A4B';
+        specBat.innerText = '45 HP';
+        specSkeleton.innerText = '65 HP';
+        specBrute.innerText = '160 HP';
+        specBoss.innerText = '780 HP';
+        specBoss.style.color = '#FF1744';
+      }
+    }
+
+    // 5. Reproductor BGM D&D
+    let isBgmPlaying = false;
+    const dndAudio = document.getElementById('dndAudio');
+
+    function toggleBgm() {
+      const playIcon = document.getElementById('bgmPlayIcon');
+      const playText = document.getElementById('bgmPlayText');
+
+      if (!isBgmPlaying) {
+        dndAudio.play().then(() => {
+          isBgmPlaying = true;
+          playIcon.innerText = '⏸️';
+          playText.innerText = 'Pausar Banda Sonora';
+        }).catch(() => {});
+      } else {
+        dndAudio.pause();
+        isBgmPlaying = false;
+        playIcon.innerText = '▶️';
+        playText.innerText = 'Escuchar Banda Sonora';
+      }
+    }
+
+    function setBgmVolume(val) {
+      if (dndAudio) {
+        dndAudio.volume = parseFloat(val);
+      }
+      const label = document.getElementById('bgmVolLabel');
+      if (label) {
+        label.innerText = Math.round(val * 100) + '%';
       }
     }
   </script>

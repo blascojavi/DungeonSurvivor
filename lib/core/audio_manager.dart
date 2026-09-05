@@ -2,10 +2,16 @@ import 'package:flame_audio/flame_audio.dart';
 
 class AudioManager {
   static bool isMuted = false;
+  static double musicVolume = 0.7;
+  static double sfxVolume = 0.9;
+  static bool _isBgmPlaying = false;
   static final Map<String, int> _lastPlayedMs = {};
   static final Map<String, AudioPool> _pools = {};
 
-  static Future<void> initialize() async {
+  static Future<void> initialize({double? initialMusicVolume, double? initialSfxVolume}) async {
+    if (initialMusicVolume != null) musicVolume = initialMusicVolume.clamp(0.0, 1.0);
+    if (initialSfxVolume != null) sfxVolume = initialSfxVolume.clamp(0.0, 1.0);
+
     try {
       await FlameAudio.audioCache.loadAll([
         'shoot.wav',
@@ -18,6 +24,7 @@ class AudioManager {
         'explosion.wav',
         'enemy_shoot.wav',
         'boss_roar.wav',
+        'bgm_dungeon.wav',
       ]);
       _pools['shoot.wav'] = await FlameAudio.createPool('shoot.wav', minPlayers: 1, maxPlayers: 2);
       _pools['hit.wav'] = await FlameAudio.createPool('hit.wav', minPlayers: 1, maxPlayers: 2);
@@ -31,6 +38,66 @@ class AudioManager {
       _pools['boss_roar.wav'] = await FlameAudio.createPool('boss_roar.wav', minPlayers: 1, maxPlayers: 1);
     } catch (_) {}
   }
+
+  // --- CONTROLES DE MÚSICA DE FONDO (BGM) ---
+
+  static Future<void> startBgm() async {
+    if (isMuted || musicVolume <= 0) return;
+    try {
+      if (!_isBgmPlaying) {
+        await FlameAudio.bgm.play('bgm_dungeon.wav', volume: musicVolume);
+        _isBgmPlaying = true;
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> pauseBgm() async {
+    try {
+      if (_isBgmPlaying) {
+        await FlameAudio.bgm.pause();
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> resumeBgm() async {
+    if (isMuted || musicVolume <= 0) return;
+    try {
+      if (_isBgmPlaying) {
+        await FlameAudio.bgm.resume();
+      } else {
+        await startBgm();
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> stopBgm() async {
+    try {
+      await FlameAudio.bgm.stop();
+      _isBgmPlaying = false;
+    } catch (_) {}
+  }
+
+  static void setMusicVolume(double vol) {
+    musicVolume = vol.clamp(0.0, 1.0);
+    try {
+      if (musicVolume <= 0) {
+        FlameAudio.bgm.pause();
+      } else {
+        FlameAudio.bgm.audioPlayer.setVolume(musicVolume);
+        if (!_isBgmPlaying) {
+          startBgm();
+        } else {
+          FlameAudio.bgm.resume();
+        }
+      }
+    } catch (_) {}
+  }
+
+  static void setSfxVolume(double vol) {
+    sfxVolume = vol.clamp(0.0, 1.0);
+  }
+
+  // --- EFECTOS DE SONIDO (SFX) ---
 
   static void playShoot() {
     _play('shoot.wav', volume: 0.45, throttleMs: 140);
@@ -73,7 +140,7 @@ class AudioManager {
   }
 
   static void _play(String fileName, {double volume = 1.0, int throttleMs = 80}) {
-    if (isMuted) return;
+    if (isMuted || sfxVolume <= 0) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final last = _lastPlayedMs[fileName] ?? 0;
     if (now - last < throttleMs) {
@@ -81,13 +148,16 @@ class AudioManager {
     }
     _lastPlayedMs[fileName] = now;
 
+    final effectiveVolume = (volume * sfxVolume).clamp(0.0, 1.0);
+
     try {
       final pool = _pools[fileName];
       if (pool != null) {
-        pool.start(volume: volume);
+        pool.start(volume: effectiveVolume);
       } else {
-        FlameAudio.play(fileName, volume: volume);
+        FlameAudio.play(fileName, volume: effectiveVolume);
       }
     } catch (_) {}
   }
 }
+

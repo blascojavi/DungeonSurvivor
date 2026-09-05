@@ -44,84 +44,90 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   })  : hp = maxHp,
         super(position: position, size: size, anchor: Anchor.center);
 
-  factory EnemyComponent.bat(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.bat(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 45.0 : 20.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.bat,
-      maxHp: 45 * difficultyMultiplier,
-      speed: 100,
-      contactDamage: 8 * difficultyMultiplier,
-      expValue: 15,
+      maxHp: baseHp * difficultyMultiplier,
+      speed: isNightmare ? 100 : 90,
+      contactDamage: (isNightmare ? 8.0 : 6.0) * difficultyMultiplier,
+      expValue: isNightmare ? 15 : 12,
       goldChance: 25,
       size: Vector2(34, 30),
       sprite: sprite,
     );
   }
 
-  factory EnemyComponent.skeleton(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.skeleton(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 65.0 : 45.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.skeleton,
-      maxHp: 65 * difficultyMultiplier,
-      speed: 65,
-      contactDamage: 14 * difficultyMultiplier,
-      expValue: 30,
+      maxHp: baseHp * difficultyMultiplier,
+      speed: isNightmare ? 65 : 60,
+      contactDamage: (isNightmare ? 14.0 : 12.0) * difficultyMultiplier,
+      expValue: isNightmare ? 30 : 25,
       goldChance: 50,
       size: Vector2(36, 44),
       sprite: sprite,
     );
   }
 
-  factory EnemyComponent.brute(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.brute(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 160.0 : 120.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.brute,
-      maxHp: 160 * difficultyMultiplier,
+      maxHp: baseHp * difficultyMultiplier,
       speed: 40,
-      contactDamage: 25 * difficultyMultiplier,
-      expValue: 80,
+      contactDamage: (isNightmare ? 25.0 : 22.0) * difficultyMultiplier,
+      expValue: isNightmare ? 80 : 70,
       goldChance: 90,
       size: Vector2(48, 54),
       sprite: sprite,
     );
   }
 
-  factory EnemyComponent.cultist(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.cultist(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 70.0 : 40.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.cultist,
-      maxHp: 70 * difficultyMultiplier,
+      maxHp: baseHp * difficultyMultiplier,
       speed: 55,
-      contactDamage: 12 * difficultyMultiplier,
-      expValue: 40,
+      contactDamage: (isNightmare ? 12.0 : 10.0) * difficultyMultiplier,
+      expValue: isNightmare ? 40 : 35,
       goldChance: 40,
       size: Vector2(34, 46),
       sprite: sprite,
     );
   }
 
-  factory EnemyComponent.bomber(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.bomber(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 55.0 : 24.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.bomber,
-      maxHp: 55 * difficultyMultiplier,
-      speed: 130, // Rápido y errático
-      contactDamage: 10 * difficultyMultiplier,
-      expValue: 25,
+      maxHp: baseHp * difficultyMultiplier,
+      speed: isNightmare ? 130 : 115,
+      contactDamage: (isNightmare ? 10.0 : 8.0) * difficultyMultiplier,
+      expValue: isNightmare ? 25 : 20,
       goldChance: 35,
       size: Vector2(32, 34),
       sprite: sprite,
     );
   }
 
-  factory EnemyComponent.boss(Vector2 position, double difficultyMultiplier, Sprite? sprite) {
+  factory EnemyComponent.boss(Vector2 position, double difficultyMultiplier, Sprite? sprite, {bool isNightmare = true}) {
+    final baseHp = isNightmare ? 780.0 : 480.0;
     return EnemyComponent._(
       position: position,
       type: EnemyType.boss,
-      maxHp: 780 * difficultyMultiplier,
-      speed: 45,
-      contactDamage: 30 * difficultyMultiplier,
-      expValue: 350,
+      maxHp: baseHp * difficultyMultiplier,
+      speed: isNightmare ? 45 : 40,
+      contactDamage: (isNightmare ? 30.0 : 25.0) * difficultyMultiplier,
+      expValue: isNightmare ? 350 : 250,
       goldChance: 100,
       size: Vector2(65, 75),
       sprite: sprite,

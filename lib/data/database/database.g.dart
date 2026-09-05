@@ -1645,6 +1645,18 @@ class $GameSettingsTableTable extends GameSettingsTable
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _difficultyModeMeta = const VerificationMeta(
+    'difficultyMode',
+  );
+  @override
+  late final GeneratedColumn<String> difficultyMode = GeneratedColumn<String>(
+    'difficulty_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('nightmare'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1654,6 +1666,7 @@ class $GameSettingsTableTable extends GameSettingsTable
     damageNumbers,
     languageCode,
     isLeftHanded,
+    difficultyMode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1721,6 +1734,15 @@ class $GameSettingsTableTable extends GameSettingsTable
         ),
       );
     }
+    if (data.containsKey('difficulty_mode')) {
+      context.handle(
+        _difficultyModeMeta,
+        difficultyMode.isAcceptableOrUnknown(
+          data['difficulty_mode']!,
+          _difficultyModeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1758,6 +1780,10 @@ class $GameSettingsTableTable extends GameSettingsTable
         DriftSqlType.bool,
         data['${effectivePrefix}is_left_handed'],
       )!,
+      difficultyMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}difficulty_mode'],
+      )!,
     );
   }
 
@@ -1776,6 +1802,7 @@ class GameSettingsTableData extends DataClass
   final bool damageNumbers;
   final String languageCode;
   final bool isLeftHanded;
+  final String difficultyMode;
   const GameSettingsTableData({
     required this.id,
     required this.musicVolume,
@@ -1784,6 +1811,7 @@ class GameSettingsTableData extends DataClass
     required this.damageNumbers,
     required this.languageCode,
     required this.isLeftHanded,
+    required this.difficultyMode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1795,6 +1823,7 @@ class GameSettingsTableData extends DataClass
     map['damage_numbers'] = Variable<bool>(damageNumbers);
     map['language_code'] = Variable<String>(languageCode);
     map['is_left_handed'] = Variable<bool>(isLeftHanded);
+    map['difficulty_mode'] = Variable<String>(difficultyMode);
     return map;
   }
 
@@ -1807,6 +1836,7 @@ class GameSettingsTableData extends DataClass
       damageNumbers: Value(damageNumbers),
       languageCode: Value(languageCode),
       isLeftHanded: Value(isLeftHanded),
+      difficultyMode: Value(difficultyMode),
     );
   }
 
@@ -1823,6 +1853,7 @@ class GameSettingsTableData extends DataClass
       damageNumbers: serializer.fromJson<bool>(json['damageNumbers']),
       languageCode: serializer.fromJson<String>(json['languageCode']),
       isLeftHanded: serializer.fromJson<bool>(json['isLeftHanded']),
+      difficultyMode: serializer.fromJson<String>(json['difficultyMode']),
     );
   }
   @override
@@ -1836,6 +1867,7 @@ class GameSettingsTableData extends DataClass
       'damageNumbers': serializer.toJson<bool>(damageNumbers),
       'languageCode': serializer.toJson<String>(languageCode),
       'isLeftHanded': serializer.toJson<bool>(isLeftHanded),
+      'difficultyMode': serializer.toJson<String>(difficultyMode),
     };
   }
 
@@ -1847,6 +1879,7 @@ class GameSettingsTableData extends DataClass
     bool? damageNumbers,
     String? languageCode,
     bool? isLeftHanded,
+    String? difficultyMode,
   }) => GameSettingsTableData(
     id: id ?? this.id,
     musicVolume: musicVolume ?? this.musicVolume,
@@ -1855,6 +1888,7 @@ class GameSettingsTableData extends DataClass
     damageNumbers: damageNumbers ?? this.damageNumbers,
     languageCode: languageCode ?? this.languageCode,
     isLeftHanded: isLeftHanded ?? this.isLeftHanded,
+    difficultyMode: difficultyMode ?? this.difficultyMode,
   );
   GameSettingsTableData copyWithCompanion(GameSettingsTableCompanion data) {
     return GameSettingsTableData(
@@ -1875,6 +1909,9 @@ class GameSettingsTableData extends DataClass
       isLeftHanded: data.isLeftHanded.present
           ? data.isLeftHanded.value
           : this.isLeftHanded,
+      difficultyMode: data.difficultyMode.present
+          ? data.difficultyMode.value
+          : this.difficultyMode,
     );
   }
 
@@ -1887,7 +1924,8 @@ class GameSettingsTableData extends DataClass
           ..write('hapticsEnabled: $hapticsEnabled, ')
           ..write('damageNumbers: $damageNumbers, ')
           ..write('languageCode: $languageCode, ')
-          ..write('isLeftHanded: $isLeftHanded')
+          ..write('isLeftHanded: $isLeftHanded, ')
+          ..write('difficultyMode: $difficultyMode')
           ..write(')'))
         .toString();
   }
@@ -1901,6 +1939,7 @@ class GameSettingsTableData extends DataClass
     damageNumbers,
     languageCode,
     isLeftHanded,
+    difficultyMode,
   );
   @override
   bool operator ==(Object other) =>
@@ -1912,7 +1951,8 @@ class GameSettingsTableData extends DataClass
           other.hapticsEnabled == this.hapticsEnabled &&
           other.damageNumbers == this.damageNumbers &&
           other.languageCode == this.languageCode &&
-          other.isLeftHanded == this.isLeftHanded);
+          other.isLeftHanded == this.isLeftHanded &&
+          other.difficultyMode == this.difficultyMode);
 }
 
 class GameSettingsTableCompanion
@@ -1924,6 +1964,7 @@ class GameSettingsTableCompanion
   final Value<bool> damageNumbers;
   final Value<String> languageCode;
   final Value<bool> isLeftHanded;
+  final Value<String> difficultyMode;
   const GameSettingsTableCompanion({
     this.id = const Value.absent(),
     this.musicVolume = const Value.absent(),
@@ -1932,6 +1973,7 @@ class GameSettingsTableCompanion
     this.damageNumbers = const Value.absent(),
     this.languageCode = const Value.absent(),
     this.isLeftHanded = const Value.absent(),
+    this.difficultyMode = const Value.absent(),
   });
   GameSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -1941,6 +1983,7 @@ class GameSettingsTableCompanion
     this.damageNumbers = const Value.absent(),
     this.languageCode = const Value.absent(),
     this.isLeftHanded = const Value.absent(),
+    this.difficultyMode = const Value.absent(),
   });
   static Insertable<GameSettingsTableData> custom({
     Expression<int>? id,
@@ -1950,6 +1993,7 @@ class GameSettingsTableCompanion
     Expression<bool>? damageNumbers,
     Expression<String>? languageCode,
     Expression<bool>? isLeftHanded,
+    Expression<String>? difficultyMode,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1959,6 +2003,7 @@ class GameSettingsTableCompanion
       if (damageNumbers != null) 'damage_numbers': damageNumbers,
       if (languageCode != null) 'language_code': languageCode,
       if (isLeftHanded != null) 'is_left_handed': isLeftHanded,
+      if (difficultyMode != null) 'difficulty_mode': difficultyMode,
     });
   }
 
@@ -1970,6 +2015,7 @@ class GameSettingsTableCompanion
     Value<bool>? damageNumbers,
     Value<String>? languageCode,
     Value<bool>? isLeftHanded,
+    Value<String>? difficultyMode,
   }) {
     return GameSettingsTableCompanion(
       id: id ?? this.id,
@@ -1979,6 +2025,7 @@ class GameSettingsTableCompanion
       damageNumbers: damageNumbers ?? this.damageNumbers,
       languageCode: languageCode ?? this.languageCode,
       isLeftHanded: isLeftHanded ?? this.isLeftHanded,
+      difficultyMode: difficultyMode ?? this.difficultyMode,
     );
   }
 
@@ -2006,6 +2053,9 @@ class GameSettingsTableCompanion
     if (isLeftHanded.present) {
       map['is_left_handed'] = Variable<bool>(isLeftHanded.value);
     }
+    if (difficultyMode.present) {
+      map['difficulty_mode'] = Variable<String>(difficultyMode.value);
+    }
     return map;
   }
 
@@ -2018,7 +2068,8 @@ class GameSettingsTableCompanion
           ..write('hapticsEnabled: $hapticsEnabled, ')
           ..write('damageNumbers: $damageNumbers, ')
           ..write('languageCode: $languageCode, ')
-          ..write('isLeftHanded: $isLeftHanded')
+          ..write('isLeftHanded: $isLeftHanded, ')
+          ..write('difficultyMode: $difficultyMode')
           ..write(')'))
         .toString();
   }
@@ -2877,6 +2928,7 @@ typedef $$GameSettingsTableTableCreateCompanionBuilder =
       Value<bool> damageNumbers,
       Value<String> languageCode,
       Value<bool> isLeftHanded,
+      Value<String> difficultyMode,
     });
 typedef $$GameSettingsTableTableUpdateCompanionBuilder =
     GameSettingsTableCompanion Function({
@@ -2887,6 +2939,7 @@ typedef $$GameSettingsTableTableUpdateCompanionBuilder =
       Value<bool> damageNumbers,
       Value<String> languageCode,
       Value<bool> isLeftHanded,
+      Value<String> difficultyMode,
     });
 
 class $$GameSettingsTableTableFilterComposer
@@ -2930,6 +2983,11 @@ class $$GameSettingsTableTableFilterComposer
 
   ColumnFilters<bool> get isLeftHanded => $composableBuilder(
     column: $table.isLeftHanded,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get difficultyMode => $composableBuilder(
+    column: $table.difficultyMode,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2977,6 +3035,11 @@ class $$GameSettingsTableTableOrderingComposer
     column: $table.isLeftHanded,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get difficultyMode => $composableBuilder(
+    column: $table.difficultyMode,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$GameSettingsTableTableAnnotationComposer
@@ -3016,6 +3079,11 @@ class $$GameSettingsTableTableAnnotationComposer
 
   GeneratedColumn<bool> get isLeftHanded => $composableBuilder(
     column: $table.isLeftHanded,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get difficultyMode => $composableBuilder(
+    column: $table.difficultyMode,
     builder: (column) => column,
   );
 }
@@ -3067,6 +3135,7 @@ class $$GameSettingsTableTableTableManager
                 Value<bool> damageNumbers = const Value.absent(),
                 Value<String> languageCode = const Value.absent(),
                 Value<bool> isLeftHanded = const Value.absent(),
+                Value<String> difficultyMode = const Value.absent(),
               }) => GameSettingsTableCompanion(
                 id: id,
                 musicVolume: musicVolume,
@@ -3075,6 +3144,7 @@ class $$GameSettingsTableTableTableManager
                 damageNumbers: damageNumbers,
                 languageCode: languageCode,
                 isLeftHanded: isLeftHanded,
+                difficultyMode: difficultyMode,
               ),
           createCompanionCallback:
               ({
@@ -3085,6 +3155,7 @@ class $$GameSettingsTableTableTableManager
                 Value<bool> damageNumbers = const Value.absent(),
                 Value<String> languageCode = const Value.absent(),
                 Value<bool> isLeftHanded = const Value.absent(),
+                Value<String> difficultyMode = const Value.absent(),
               }) => GameSettingsTableCompanion.insert(
                 id: id,
                 musicVolume: musicVolume,
@@ -3093,6 +3164,7 @@ class $$GameSettingsTableTableTableManager
                 damageNumbers: damageNumbers,
                 languageCode: languageCode,
                 isLeftHanded: isLeftHanded,
+                difficultyMode: difficultyMode,
               ),
           withReferenceMapper: (p0) => p0
               .map(

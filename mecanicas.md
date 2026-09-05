@@ -153,17 +153,45 @@ A diferencia de las bendiciones temporales de la partida, el oro acumulado **se 
 
 ---
 
-## 10. Sistema de Audio y Optimización de Rendimiento
+## 10. Sistema de Dificultad: Novato vs Pesadilla
 
-1. **Gestión de Memoria con `AudioPool`:**
-   - Todos los efectos de sonido (`hit.wav`, `shoot.wav`, `gem.wav`, `levelup.wav`, `ultimate.wav`, `explosion.wav`, `enemy_shoot.wav`, `boss_roar.wav`) utilizan instancias pre-alocadas de `AudioPool` en [`AudioManager`](file:///c:/Users/Javi/AndroidStudioProjects/Juego/lib/core/audio_manager.dart).
-   - Esto evita la saturación de descriptores nativos en Android y previene pausas del recolector de basura (*GC pauses*), permitiendo 60/120 FPS estables.
-2. **Frecuencias de Muestreo Nativas:** Audio en formato WAV PCM a 22,050 Hz de baja latencia.
+Desde la pantalla de Ajustes o desde el Menú Principal, el jugador puede alternar libremente entre dos perfiles de dificultad persistidos en SQLite local:
+
+### 10.1. Comparativa de Parámetros
+
+| Parámetro | 🛡️ Modo Novato (Equilibrado) | 💀 Modo Pesadilla (Hardcore) |
+|---|:---:|:---:|
+| **Enfoque de Juego** | Supervivencia clásica, ritmo accesible y controlable | Frenesí táctico, hordas masivas y tensión constante cada segundo |
+| **Límite Concurrente en Pantalla** | **32 enemigos** fijos | **70** (Oleada 1) → **95** (Oleada 2) → **125** (Oleada 3+) |
+| **Composición Oleada 1** | ~12 Murciélagos, ~6 Esqueletos, ~2 Brutos | **25-35 Murciélagos**, **15-25 Esqueletos**, **5-9 Brutos** (Total > 60) |
+| **Generación por Lote (Spawn Batch)** | 1 enemigo por intervalo | 2 enemigos simultáneos si existe déficit > 15 |
+| **Vida Base Murciélago** | **20 HP** | **45 HP** (+125%) |
+| **Vida Base Esqueleto** | **45 HP** | **65 HP** (+44%) |
+| **Vida Base Bruto** | **120 HP** | **160 HP** (+33%) |
+| **Vida Base Cultista** | **40 HP** | **70 HP** (+75%) |
+| **Vida Base Duende Bomba** | **24 HP** | **55 HP** (+129%) |
+| **Vida Base Lord Malakor (Boss)** | **480 HP** | **780 HP** (+62%) |
+| **Escalado de Jefes (Oleada 15+)** | Siempre **1 jefe** en oleadas de boss (5, 10, 15, 20...) | **Multiplicación x2 acumulativa**: Ol 15: 2, Ol 20: 4, Ol 25: 8, Ol 30: 16... |
 
 ---
 
-## 11. Base de Datos Local y Salón de Récords
+## 11. Sistema de Audio, Banda Sonora D&D y Ajustes en Tiempo Real
 
-- **Arquitectura:** SQLite relacional embebido mediante **Drift** (`sqlite3_flutter_libs`), operando en un hilo de fondo dedicado.
+1. **Banda Sonora Ambiental Estilo Dungeons & Dragons (D&D):**
+   - Pista original en bucle perfecto (`bgm_dungeon.wav`) compuesta en la tonalidad de **Re menor (D minor)**.
+   - Combina un bordón grave de cuerdas ancestrales (73.42 Hz y 146.83 Hz), tambores de guerra con reverberación cavernosa cada 2 segundos y arpegios místicos de campana arcana.
+   - Se reproduce tanto en el menú principal como durante la batalla en la mazmorra.
+2. **Controles de Volumen Independientes:**
+   - **Slider de Música (0% - 100%):** Ajusta el volumen del canal BGM en tiempo real. Al ponerlo a 0%, la música se pausa para ahorrar recursos.
+   - **Slider de Efectos SFX (0% - 100%):** Controla el volumen relativo de disparos, gemas, rugidos y explosiones de los `AudioPool`.
+3. **Pausa y Ajustes en Pleno Combate:**
+   - Se ha añadido un botón de **Pausa** en la esquina superior del HUD durante la partida.
+   - Abre un panel modal flotante que permite calibrar los volúmenes de música y efectos sobre la marcha o salir al menú principal sin forzar el cierre del juego.
+
+---
+
+## 12. Base de Datos Local y Salón de Récords
+
+- **Arquitectura:** SQLite relacional embebido mediante **Drift** (`sqlite3_flutter_libs`), operando en un hilo de fondo dedicado con versión de esquema 3 y migraciones automáticas.
 - **Rendimiento:** 0 operaciones de I/O en disco durante el combate activo a 60 FPS; todas las transacciones de guardado se ejecutan de manera asíncrona al terminar la partida.
 - **Salón de Récords:** Registra las 10 mejores expediciones ordenadas por puntuación, incluyendo oleada alcanzada, enemigos eliminados y oro acumulado.

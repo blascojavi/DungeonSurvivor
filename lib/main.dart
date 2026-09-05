@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'core/audio_manager.dart';
 import 'data/database/database.dart';
 import 'data/repositories/game_repository.dart';
 import 'screens/main_menu_screen.dart';
@@ -26,6 +27,16 @@ void main() async {
   // Inicializar Base de Datos Local SQLite (Drift)
   final database = AppDatabase();
   final repository = GameRepository(database);
+
+  // Sincronizar ajustes de audio y reproducir banda sonora D&D
+  try {
+    final settings = await repository.getSettings();
+    await AudioManager.initialize(
+      initialMusicVolume: settings.musicVolume,
+      initialSfxVolume: settings.sfxVolume,
+    );
+    await AudioManager.startBgm();
+  } catch (_) {}
 
   runApp(DungeonSurvivorApp(repository: repository));
 }

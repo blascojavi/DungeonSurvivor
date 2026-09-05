@@ -15,6 +15,7 @@ void main() {
     expect(find.text('ENTRAR A LA MAZMORRA'), findsOneWidget);
     expect(find.text('TALLER DE MEJORAS'), findsOneWidget);
     expect(find.text('RÉCORDS Y ESTADÍSTICAS'), findsOneWidget);
+    expect(find.text('AJUSTES Y DIFICULTAD'), findsOneWidget);
 
     await db.close();
   });

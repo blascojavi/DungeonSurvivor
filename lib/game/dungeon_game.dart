@@ -16,6 +16,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final GameRepository repository;
   final List<PermanentUpgrade> activeUpgrades;
   final bool isLeftHanded;
+  final String difficultyMode;
+
+  bool get isNightmare => difficultyMode == 'nightmare';
 
   late PlayerComponent player;
   late JoystickComponent joystick;
@@ -24,7 +27,8 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final List<EnemyComponent> activeEnemies = [];
   final List<GemComponent> activeGems = [];
   int get currentMaxEnemies {
-    if (currentWave == 1) return 70; // Mayor que 60 como pide el usuario
+    if (!isNightmare) return 32;
+    if (currentWave == 1) return 70; // Mayor que 60 en Pesadilla
     if (currentWave == 2) return 95;
     return (95 + (currentWave - 2) * 8).clamp(95, 125);
   }
@@ -47,7 +51,8 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   int getBossCountForWave(int wave) {
     if (wave < 5 || wave % 5 != 0) return 0;
-    if (wave < 15) return 1; // Oleadas 5 y 10: 1 jefe
+    if (!isNightmare) return 1; // En Modo Novato siempre es un único jefe
+    if (wave < 15) return 1; // En Modo Pesadilla: Oleadas 5 y 10: 1 jefe
     // A partir de la oleada 15, en cada oleada posterior multiplica x2:
     // Oleada 15 = 2, Oleada 20 = 4, Oleada 25 = 8, Oleada 30 = 16...
     final stepsAfter15 = ((wave - 15) / 5).floor();
@@ -86,6 +91,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     required this.repository,
     required this.activeUpgrades,
     this.isLeftHanded = false,
+    this.difficultyMode = 'nightmare',
   });
 
   @override
@@ -95,8 +101,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Precarga de audio
+    // Precarga e inicio de audio BGM y efectos
     await AudioManager.initialize();
+    await AudioManager.startBgm();
 
     // Precarga de sprites de enemigos y jefes una sola vez
     try {
@@ -218,14 +225,13 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       _spawnedBossWaves.add(currentWave);
       final bossCount = getBossCountForWave(currentWave);
       final bossDifficultyMultiplier = 1.0 + (currentWave - 1) * 0.12;
-
       for (int i = 0; i < bossCount; i++) {
         final angle = (2 * pi / bossCount) * i + _random.nextDouble() * 0.3;
         const spawnDistance = 560.0;
         final pos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
         pos.x = pos.x.clamp(60.0, DungeonMapComponent.mapWidth - 60.0);
         pos.y = pos.y.clamp(60.0, DungeonMapComponent.mapHeight - 60.0);
-        world.add(EnemyComponent.boss(pos, bossDifficultyMultiplier, bossSprite));
+        world.add(EnemyComponent.boss(pos, bossDifficultyMultiplier, bossSprite, isNightmare: isNightmare));
       }
       return;
     }
@@ -234,9 +240,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       return; // Límite dinámico de entidades para asegurar 60/120 FPS sin saturar
     }
 
-    // Generación por lote si hay déficit grande para alcanzar rápido los simultáneos
-    final batchCount = (activeEnemies.length < currentMaxEnemies - 15) ? 2 : 1;
-    final difficultyMultiplier = 1.0 + (currentWave - 1) * 0.18;
+    // Generación por lote si hay déficit grande para alcanzar rápido los simultáneos (solo en Pesadilla)
+    final batchCount = (!isNightmare) ? 1 : ((activeEnemies.length < currentMaxEnemies - 15) ? 2 : 1);
+    final difficultyMultiplier = 1.0 + (currentWave - 1) * (isNightmare ? 0.18 : 0.12);
 
     for (int b = 0; b < batchCount; b++) {
       if (activeEnemies.length >= currentMaxEnemies) break;
@@ -245,22 +251,22 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       EnemyComponent enemy;
       switch (typeToSpawn) {
         case EnemyType.bat:
-          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite, isNightmare: isNightmare);
           break;
         case EnemyType.skeleton:
-          enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite);
+          enemy = EnemyComponent.skeleton(spawnPos, difficultyMultiplier, skeletonSprite, isNightmare: isNightmare);
           break;
         case EnemyType.brute:
-          enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite);
+          enemy = EnemyComponent.brute(spawnPos, difficultyMultiplier, bruteSprite, isNightmare: isNightmare);
           break;
         case EnemyType.cultist:
-          enemy = EnemyComponent.cultist(spawnPos, difficultyMultiplier, cultistSprite);
+          enemy = EnemyComponent.cultist(spawnPos, difficultyMultiplier, cultistSprite, isNightmare: isNightmare);
           break;
         case EnemyType.bomber:
-          enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite);
+          enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite, isNightmare: isNightmare);
           break;
         case EnemyType.boss:
-          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite);
+          enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite, isNightmare: isNightmare);
           break;
       }
       world.add(enemy);
@@ -302,26 +308,47 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     int targetCultists = 0;
     int targetBombers = 0;
 
-    if (currentWave == 1) {
-      // Murciélagos: 25 a 35 (centro 30)
-      // Esqueletos: 15 a 25 (centro 20)
-      // Brutos: 5 a 9 (centro 7)
-      targetBats = 30;
-      targetSkeletons = 20;
-      targetBrutes = 7;
-    } else if (currentWave == 2) {
-      // Aumenta un 50% los simultáneos de cada uno
-      targetBats = 45; // 30 * 1.5
-      targetSkeletons = 30; // 20 * 1.5
-      targetBrutes = 10; // 7 * 1.5 ≈ 10
+    if (!isNightmare) {
+      // Modo Novato: distribución equilibrada y clásica de hordas
+      if (currentWave == 1) {
+        targetBats = 12;
+        targetSkeletons = 6;
+        targetBrutes = 2;
+      } else if (currentWave == 2) {
+        targetBats = 16;
+        targetSkeletons = 9;
+        targetBrutes = 3;
+      } else {
+        final waveBonus = (currentWave - 3);
+        targetBats = (15 + waveBonus).clamp(12, 18);
+        targetSkeletons = (10 + waveBonus).clamp(8, 14);
+        targetBrutes = (3 + (waveBonus ~/ 2)).clamp(2, 5);
+        targetCultists = (4 + waveBonus).clamp(3, 8);
+        targetBombers = (4 + waveBonus).clamp(3, 7);
+      }
     } else {
-      // Oleada 3+: Escala incorporando Magos Cultistas y Duendes Bomba
-      final waveBonus = (currentWave - 3) * 2;
-      targetBats = (38 + waveBonus).clamp(25, 45);
-      targetSkeletons = (25 + waveBonus).clamp(18, 32);
-      targetBrutes = (9 + (waveBonus ~/ 2)).clamp(6, 12);
-      targetCultists = (15 + waveBonus).clamp(10, 22);
-      targetBombers = (14 + waveBonus).clamp(10, 20);
+      // Modo Pesadilla: hordas brutales masivas
+      if (currentWave == 1) {
+        // Murciélagos: 25 a 35 (centro 30)
+        // Esqueletos: 15 a 25 (centro 20)
+        // Brutos: 5 a 9 (centro 7)
+        targetBats = 30;
+        targetSkeletons = 20;
+        targetBrutes = 7;
+      } else if (currentWave == 2) {
+        // Aumenta un 50% los simultáneos de cada uno
+        targetBats = 45; // 30 * 1.5
+        targetSkeletons = 30; // 20 * 1.5
+        targetBrutes = 10; // 7 * 1.5 ≈ 10
+      } else {
+        // Oleada 3+: Escala incorporando Magos Cultistas y Duendes Bomba
+        final waveBonus = (currentWave - 3) * 2;
+        targetBats = (38 + waveBonus).clamp(25, 45);
+        targetSkeletons = (25 + waveBonus).clamp(18, 32);
+        targetBrutes = (9 + (waveBonus ~/ 2)).clamp(6, 12);
+        targetCultists = (15 + waveBonus).clamp(10, 22);
+        targetBombers = (14 + waveBonus).clamp(10, 20);
+      }
     }
 
     final deficits = <EnemyType, int>{
@@ -355,8 +382,8 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   void onEnemyKilled(EnemyComponent enemy) {
     enemiesSlain++;
-    score += (enemy.expValue * currentWave);
     killsNotifier.value = enemiesSlain;
+    score += (enemy.expValue * currentWave);
     player.onEnemyKilled();
   }
 
@@ -453,6 +480,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void onGameOver() {
+    AudioManager.pauseBgm();
     AudioManager.playGameOver();
     pauseEngine();
     repository.saveRunResult(
@@ -464,6 +492,12 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     );
 
     overlays.add('GameOver');
+  }
+
+  @override
+  void onRemove() {
+    AudioManager.pauseBgm();
+    super.onRemove();
   }
 
   @override

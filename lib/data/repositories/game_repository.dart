@@ -113,4 +113,28 @@ class GameRepository {
       ),
     );
   }
+
+  Future<void> setMusicVolume(double volume) async {
+    await (db.update(db.gameSettingsTable)..where((tbl) => tbl.id.equals(1))).write(
+      GameSettingsTableCompanion(
+        musicVolume: Value(volume),
+      ),
+    );
+  }
+
+  Future<void> setSfxVolume(double volume) async {
+    await (db.update(db.gameSettingsTable)..where((tbl) => tbl.id.equals(1))).write(
+      GameSettingsTableCompanion(
+        sfxVolume: Value(volume),
+      ),
+    );
+  }
+
+  Future<void> setDifficultyMode(String mode) async {
+    await (db.update(db.gameSettingsTable)..where((tbl) => tbl.id.equals(1))).write(
+      GameSettingsTableCompanion(
+        difficultyMode: Value(mode),
+      ),
+    );
+  }
 }

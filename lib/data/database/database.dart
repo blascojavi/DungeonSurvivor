@@ -52,6 +52,7 @@ class GameSettingsTable extends Table {
   BoolColumn get damageNumbers => boolean().withDefault(const Constant(true))();
   TextColumn get languageCode => text().withDefault(const Constant('es'))();
   BoolColumn get isLeftHanded => boolean().withDefault(const Constant(false))();
+  TextColumn get difficultyMode => text().withDefault(const Constant('nightmare'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -63,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting([QueryExecutor? executor]) : super(executor ?? NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -123,6 +124,9 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 2) {
           await m.addColumn(gameSettingsTable, gameSettingsTable.isLeftHanded);
+        }
+        if (from < 3) {
+          await m.addColumn(gameSettingsTable, gameSettingsTable.difficultyMode);
         }
       },
     );

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../core/audio_manager.dart';
 import '../data/database/database.dart';
 import '../data/repositories/game_repository.dart';
 import 'game_screen.dart';
 import 'records_screen.dart';
+import 'settings_screen.dart';
 import 'shop_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
@@ -94,8 +96,8 @@ class MainMenuScreen extends StatelessWidget {
 
                   // Emblema e Ícono central
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 90,
+                    height: 90,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
@@ -111,9 +113,9 @@ class MainMenuScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.shield, color: Colors.white, size: 54),
+                    child: const Icon(Icons.shield, color: Colors.white, size: 48),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
 
                   // Título del juego
                   const Text(
@@ -121,7 +123,7 @@ class MainMenuScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 32,
+                      fontSize: 30,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 4,
                       shadows: [
@@ -129,15 +131,76 @@ class MainMenuScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   const Text(
                     'DUNGEON SURVIVOR 2D',
                     style: TextStyle(
                       color: Color(0xFF00E5FF),
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 3,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Badge de Dificultad Activa
+                  StreamBuilder<GameSettingsTableData>(
+                    stream: repository.watchSettings(),
+                    builder: (context, snapshot) {
+                      final mode = snapshot.data?.difficultyMode ?? 'nightmare';
+                      final isNightmare = mode == 'nightmare';
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SettingsScreen(repository: repository),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: isNightmare
+                                ? const Color(0xFFFF2A4B).withValues(alpha: 0.15)
+                                : const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isNightmare
+                                  ? const Color(0xFFFF2A4B).withValues(alpha: 0.4)
+                                  : const Color(0xFF00E5FF).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isNightmare ? Icons.dangerous : Icons.shield_outlined,
+                                size: 14,
+                                color: isNightmare ? const Color(0xFFFF2A4B) : const Color(0xFF00E5FF),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isNightmare ? 'MODO PESADILLA ACTIVO' : 'MODO NOVATO ACTIVO',
+                                style: TextStyle(
+                                  color: isNightmare ? const Color(0xFFFF2A4B) : const Color(0xFF00E5FF),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.settings,
+                                size: 12,
+                                color: (isNightmare ? const Color(0xFFFF2A4B) : const Color(0xFF00E5FF)).withValues(alpha: 0.6),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   const Spacer(flex: 3),
@@ -151,19 +214,21 @@ class MainMenuScreen extends StatelessWidget {
                       final upgrades = await repository.getUpgrades();
                       final settings = await repository.getSettings();
                       if (context.mounted) {
-                        Navigator.of(context).push(
+                        await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => GameScreen(
                               repository: repository,
                               upgrades: upgrades,
                               isLeftHanded: settings.isLeftHanded,
+                              difficultyMode: settings.difficultyMode,
                             ),
                           ),
                         );
+                        AudioManager.resumeBgm();
                       }
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
                   // Botón: TALLER DE MEJORAS
                   _MenuButton(
@@ -178,7 +243,7 @@ class MainMenuScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
                   // Botón: SALÓN DE RÉCORDS
                   _MenuButton(
@@ -189,6 +254,21 @@ class MainMenuScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => RecordsScreen(repository: repository),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Botón: AJUSTES Y DIFICULTAD
+                  _MenuButton(
+                    label: 'AJUSTES Y DIFICULTAD',
+                    icon: Icons.tune,
+                    isPrimary: false,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => SettingsScreen(repository: repository),
                         ),
                       );
                     },
