@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Root binary deliverables (copies stay in downloads/)
+/ShadowVault_Windows_Portable/
+/ShadowVault_Windows_Portable.zip
+/shadow-vault.apk
