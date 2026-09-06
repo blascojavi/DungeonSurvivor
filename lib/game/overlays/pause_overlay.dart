@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/audio_manager.dart';
+import '../../screens/log_viewer_dialog.dart';
 import '../dungeon_game.dart';
 
 class PauseOverlay extends StatefulWidget {
@@ -183,6 +184,17 @@ class _PauseOverlayState extends State<PauseOverlay> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+
+              // Ver logs de la partida
+              TextButton.icon(
+                onPressed: () => LogViewerDialog.show(context),
+                icon: const Icon(Icons.terminal, color: Colors.white54, size: 16),
+                label: const Text(
+                  'VER REGISTRO DE EVENTOS / LOGS',
+                  style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 1),
+                ),
               ),
             ],
           ),

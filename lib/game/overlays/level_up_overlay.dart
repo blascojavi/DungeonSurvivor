@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/audio_manager.dart';
 import '../dungeon_game.dart';
 
 class SkillCard {
@@ -71,13 +72,28 @@ class _LevelUpOverlayState extends State<LevelUpOverlay> {
   @override
   void initState() {
     super.initState();
-    // Elegir 3 habilidades al azar sin repetir
+    _refreshSkills();
+  }
+
+  void _refreshSkills() {
     final shuffled = List<SkillCard>.from(_allSkills)..shuffle(Random());
     availableSkills = shuffled.take(3).toList();
   }
 
+  void _onSkillSelected(String skillId) {
+    widget.game.applySkillUpgrade(skillId);
+    if (widget.game.pendingLevelUps > 0 && mounted) {
+      setState(() {
+        _refreshSkills();
+      });
+      AudioManager.playLevelUp();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pendingCount = widget.game.pendingLevelUps;
+
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -97,19 +113,23 @@ class _LevelUpOverlayState extends State<LevelUpOverlay> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '¡SUBIDA DE NIVEL!',
-              style: TextStyle(
+            Text(
+              pendingCount > 1
+                  ? '¡SUBIDA DE NIVEL! ($pendingCount ELECCIONES)'
+                  : '¡SUBIDA DE NIVEL!',
+              style: const TextStyle(
                 color: Color(0xFF00FF88),
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Elige una bendición para tu héroe:',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+            Text(
+              pendingCount > 1
+                  ? 'Tienes varias bendiciones acumuladas. Elige la primera:'
+                  : 'Elige una bendición para tu héroe:',
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 18),
 
@@ -117,7 +137,7 @@ class _LevelUpOverlayState extends State<LevelUpOverlay> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: InkWell(
-                  onTap: () => widget.game.applySkillUpgrade(skill.id),
+                  onTap: () => _onSkillSelected(skill.id),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.all(12),

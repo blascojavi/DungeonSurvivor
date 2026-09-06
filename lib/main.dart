@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/ad_manager.dart';
 import 'core/audio_manager.dart';
+import 'core/log_manager.dart';
 import 'data/database/database.dart';
 import 'data/repositories/game_repository.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar captura global de errores y registro de logs
+  await LogManager.initialize();
 
   // Bloquear orientación en vertical para experiencia móvil cómoda
   await SystemChrome.setPreferredOrientations([

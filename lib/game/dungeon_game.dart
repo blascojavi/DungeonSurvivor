@@ -5,6 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/audio_manager.dart';
+import '../core/log_manager.dart';
 import '../data/database/database.dart';
 import '../data/repositories/game_repository.dart';
 import 'components/dungeon_map_component.dart';
@@ -225,6 +226,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       _spawnedBossWaves.add(currentWave);
       final bossCount = getBossCountForWave(currentWave);
       final bossDifficultyMultiplier = 1.0 + (currentWave - 1) * 0.12;
+      LogManager.log('DungeonGame: ¡Invocando $bossCount Lord Malakor en oleada $currentWave!');
       for (int i = 0; i < bossCount; i++) {
         final angle = (2 * pi / bossCount) * i + _random.nextDouble() * 0.3;
         const spawnDistance = 560.0;
@@ -280,7 +282,8 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     int cultists = 0;
     int bombers = 0;
 
-    for (final e in activeEnemies) {
+    final enemiesSnapshot = List<EnemyComponent>.from(activeEnemies);
+    for (final e in enemiesSnapshot) {
       switch (e.type) {
         case EnemyType.bat:
           bats++;
@@ -381,6 +384,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void onEnemyKilled(EnemyComponent enemy) {
+    if (enemy.type == EnemyType.boss) {
+      LogManager.log('DungeonGame: ¡Lord Malakor ha sido derrotado en oleada $currentWave!');
+    }
     enemiesSlain++;
     killsNotifier.value = enemiesSlain;
     score += (enemy.expValue * currentWave);
@@ -435,6 +441,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   void queuePlayerLevelUp(int level) {
     pendingLevelUps++;
+    LogManager.log('DungeonGame: Subida de nivel encolada (Nivel $level, pendientes: $pendingLevelUps)');
     playerLevelNotifier.value = level;
     if (!overlays.isActive('LevelUp')) {
       AudioManager.playLevelUp();
@@ -444,6 +451,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void applySkillUpgrade(String skillType) {
+    LogManager.log('DungeonGame: Aplicando mejora $skillType (pendientes antes: $pendingLevelUps)');
     switch (skillType) {
       case 'damage':
         player.bulletDamage *= 1.25;
@@ -464,18 +472,13 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
 
     pendingLevelUps--;
-    if (pendingLevelUps > 0) {
-      // Recrear el overlay limpiamente para el siguiente nivel pendiente sin congelar el juego
-      overlays.remove('LevelUp');
-      Future.microtask(() {
-        if (pendingLevelUps > 0 && isMounted) {
-          overlays.add('LevelUp');
-        }
-      });
-    } else {
+    if (pendingLevelUps <= 0) {
       pendingLevelUps = 0;
       overlays.remove('LevelUp');
       resumeEngine();
+      LogManager.log('DungeonGame: Todas las mejoras aplicadas. Motor reanudado.');
+    } else {
+      LogManager.log('DungeonGame: Quedan $pendingLevelUps mejoras pendientes por elegir.');
     }
   }
 

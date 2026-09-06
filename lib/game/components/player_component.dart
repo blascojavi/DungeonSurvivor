@@ -82,7 +82,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   }
 
   void _autoFireNearestEnemy() {
-    final enemies = game.activeEnemies;
+    final enemies = List<EnemyComponent>.from(game.activeEnemies);
     if (enemies.isEmpty) return;
 
     EnemyComponent? nearest;
@@ -220,7 +220,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     }
 
     // 2. Onda expansiva con daño y repulsión a todos los enemigos cercanos
-    final enemies = game.activeEnemies;
+    final enemies = List<EnemyComponent>.from(game.activeEnemies);
     for (int i = 0; i < enemies.length; i++) {
       final e = enemies[i];
       if (!e.isMounted) continue;

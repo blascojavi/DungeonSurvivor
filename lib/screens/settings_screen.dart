@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/audio_manager.dart';
 import '../data/repositories/game_repository.dart';
+import 'log_viewer_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   final GameRepository repository;
@@ -207,6 +208,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               value: _isLeftHanded,
                               activeThumbColor: const Color(0xFF00E5FF),
                               onChanged: _updateHandedness,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      _buildSectionHeader('DIAGNÓSTICO Y REGISTROS', Icons.terminal),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF141B2B),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.bug_report_outlined, color: Color(0xFF00E5FF), size: 20),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Registro de Errores y Logs',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Eventos del juego, oleadas y excepciones',
+                                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => LogViewerDialog.show(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1E283D),
+                                foregroundColor: const Color(0xFF00E5FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(color: Color(0xFF00E5FF), width: 1),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
+                              icon: const Icon(Icons.receipt_long, size: 16),
+                              label: const Text('VER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
