@@ -39,6 +39,9 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   double _specialTimer = 0;
   final Sprite? sprite;
   double _facingDirection = 1.0;
+  bool _isDead = false;
+  bool get isDead => _isDead;
+  late final CircleHitbox _hitbox;
 
   // Variables para IA táctica (Modo Pesadilla)
   final double _randomSeed = Random().nextDouble() * 10.0;
@@ -319,11 +322,13 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   void onLoad() {
     super.onLoad();
     final radius = isBoss ? 32.0 : (size.x * 0.4);
-    add(CircleHitbox(radius: radius, anchor: Anchor.center, position: size / 2)..collisionType = CollisionType.passive);
+    _hitbox = CircleHitbox(radius: radius, anchor: Anchor.center, position: size / 2)..collisionType = CollisionType.passive;
+    add(_hitbox);
   }
 
   @override
   void update(double dt) {
+    if (_isDead) return;
     super.update(dt);
 
     if (_flashTimer > 0) {
@@ -574,7 +579,6 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
         _isCharging = true;
         _chargeTimer = 4.0; // Cooldown
         _chargeDirection = Vector2(normX, normY);
-        AudioManager.playBossRoar();
         return;
       }
       position.x += normX * (speed * dt);
@@ -656,6 +660,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   }
 
   void takeDamage(double damage) {
+    if (_isDead) return;
     hp -= damage;
     _flashTimer = 0.08;
 
@@ -669,7 +674,16 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   }
 
   void die() {
-    LogManager.log('EnemyComponent: Murió enemigo ${type.name} (esJefe: $isBoss)');
+    if (_isDead) return;
+    _isDead = true;
+
+    // Desactivar hitbox de colisión y remover inmediatamente de la lista activa
+    _hitbox.collisionType = CollisionType.inactive;
+    game.activeEnemies.remove(this);
+
+    if (isBoss) {
+      LogManager.log('EnemyComponent: Murió Jefe $bossDisplayName');
+    }
     game.onEnemyKilled(this);
 
     // Si es un Duende Bomba, explota con daño de área
@@ -696,6 +710,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+    if (_isDead) return;
     super.onCollisionStart(intersectionPoints, other);
     if (other is PlayerComponent && _attackCooldown <= 0) {
       other.takeDamage(contactDamage);

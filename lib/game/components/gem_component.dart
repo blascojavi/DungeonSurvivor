@@ -12,12 +12,19 @@ class GemComponent extends PositionComponent with HasGameReference<DungeonGame> 
   final int value;
   bool isAttracted = false;
   double attractSpeed = 160;
+  bool _isCollected = false;
 
   static final Paint _expGlow = Paint()..color = const Color(0x3300FF88);
   static final Paint _expColor = Paint()..color = const Color(0xFF00FF88);
   static final Paint _goldGlow = Paint()..color = const Color(0x33FFD700);
   static final Paint _goldColor = Paint()..color = const Color(0xFFFFD700);
   static final Paint _highlight = Paint()..color = const Color(0xCCFFFFFF);
+  static final Path _gemDiamondPath = Path()
+    ..moveTo(7, 1)
+    ..lineTo(13, 7)
+    ..lineTo(7, 13)
+    ..lineTo(1, 7)
+    ..close();
 
   GemComponent({
     required Vector2 position,
@@ -68,6 +75,9 @@ class GemComponent extends PositionComponent with HasGameReference<DungeonGame> 
   }
 
   void _collect(PlayerComponent player) {
+    if (_isCollected) return;
+    _isCollected = true;
+
     AudioManager.playGem();
     if (type == GemType.exp) {
       player.addExp(value);
@@ -86,15 +96,8 @@ class GemComponent extends PositionComponent with HasGameReference<DungeonGame> 
     // Halo ligero sin MaskFilter.blur para máximo rendimiento
     canvas.drawCircle(center, size.x / 2 + 2, isExp ? _expGlow : _goldGlow);
 
-    // Diamante / Gema
-    final path = Path()
-      ..moveTo(size.x / 2, 1)
-      ..lineTo(size.x - 1, size.y / 2)
-      ..lineTo(size.x / 2, size.y - 1)
-      ..lineTo(1, size.y / 2)
-      ..close();
-
-    canvas.drawPath(path, isExp ? _expColor : _goldColor);
+    // Diamante / Gema (usando Path cacheado estáticamente)
+    canvas.drawPath(_gemDiamondPath, isExp ? _expColor : _goldColor);
     canvas.drawCircle(Offset(size.x / 2, size.y / 3), 2, _highlight);
   }
 

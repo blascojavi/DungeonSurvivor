@@ -92,7 +92,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
     for (int i = 0; i < enemies.length; i++) {
       final enemy = enemies[i];
-      if (!enemy.isMounted) continue;
+      if (!enemy.isMounted || enemy.isDead) continue;
       // length2 evita el cálculo costoso de raíz cuadrada (sqrt)
       final distSq = (enemy.position - position).length2;
       if (distSq < minDistanceSq && distSq < maxRangeSq) {
@@ -223,7 +223,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     final enemies = List<EnemyComponent>.from(game.activeEnemies);
     for (int i = 0; i < enemies.length; i++) {
       final e = enemies[i];
-      if (!e.isMounted) continue;
+      if (!e.isMounted || e.isDead) continue;
       final diff = e.position - position;
       final distSq = diff.length2;
       if (distSq <= 280 * 280 && distSq > 1) {

@@ -20,6 +20,13 @@ class LogManager {
     try {
       final dir = await getApplicationDocumentsDirectory();
       _logFile = File('${dir.path}/shadow_vault_logs.txt');
+      if (_logFile!.existsSync()) {
+        final existingLines = await _logFile!.readAsLines();
+        if (existingLines.isNotEmpty) {
+          final startIdx = existingLines.length > 300 ? existingLines.length - 300 : 0;
+          _inMemoryLogs.addAll(existingLines.sublist(startIdx));
+        }
+      }
       log('--- Sesión iniciada: ${DateTime.now()} ---');
     } catch (e) {
       debugPrint('LogManager: No se pudo inicializar archivo de logs: $e');
@@ -59,7 +66,7 @@ class LogManager {
   static void _writeEntryToFile(String entry) {
     if (_logFile == null) return;
     try {
-      _logFile!.writeAsStringSync('$entry\n', mode: FileMode.append, flush: false);
+      _logFile!.writeAsStringSync('$entry\n', mode: FileMode.append, flush: true);
     } catch (_) {}
   }
 

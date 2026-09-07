@@ -39,26 +39,26 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       final b = bossList.first;
       switch (b.type) {
         case EnemyType.bossIgnis:
-          // Jefe coloso sencillo: enjambre de esbirros secundario masivo
-          return isNightmare ? 85 : 40;
+          // Jefe coloso sencillo: enjambre de esbirros secundario controlado
+          return isNightmare ? 55 : 35;
         case EnemyType.bossGorgoroth:
         case EnemyType.bossVespertina:
-          return isNightmare ? 60 : 30;
+          return isNightmare ? 45 : 28;
         case EnemyType.bossValerius:
           // Jefe mago táctico: guardia reducida
-          return isNightmare ? 35 : 18;
+          return isNightmare ? 28 : 16;
         case EnemyType.bossXulkrag:
           // Jefe abisal supremo: esbirros mínimos para favorecer duelo 1v1
-          return isNightmare ? 18 : 10;
+          return isNightmare ? 14 : 10;
         case EnemyType.boss:
         default:
-          return isNightmare ? 70 : 30;
+          return isNightmare ? 50 : 25;
       }
     }
     if (!isNightmare) return 32;
-    if (currentWave == 1) return 70; // Mayor que 60 en Pesadilla
-    if (currentWave == 2) return 95;
-    return (95 + (currentWave - 2) * 8).clamp(95, 125);
+    if (currentWave == 1) return 50;
+    if (currentWave == 2) return 65;
+    return (65 + (currentWave - 2) * 5).clamp(65, 80);
   }
   static const int maxGems = 64;
   static final Random _random = Random();
@@ -249,7 +249,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     currentWave = (elapsedTime / 45).floor() + 1;
 
     // Aceleración adaptativa de spawn para mantener los simultáneos requeridos
-    final targetPopulation = currentWave == 1 ? 57 : (currentWave == 2 ? 85 : 105);
+    final targetPopulation = !isNightmare
+        ? (currentWave == 1 ? 20 : (currentWave == 2 ? 28 : 32))
+        : (currentWave == 1 ? 45 : (currentWave == 2 ? 60 : 75));
     if (activeEnemies.length < targetPopulation * 0.75) {
       _spawnInterval = 0.22; // Inundación rápida hasta llenar la arena
     } else {
@@ -412,25 +414,21 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     } else {
       // Modo Pesadilla: hordas brutales masivas
       if (currentWave == 1) {
-        // Murciélagos: 25 a 35 (centro 30)
-        // Esqueletos: 15 a 25 (centro 20)
-        // Brutos: 5 a 9 (centro 7)
-        targetBats = 30;
-        targetSkeletons = 20;
-        targetBrutes = 7;
+        targetBats = 24;
+        targetSkeletons = 16;
+        targetBrutes = 5;
       } else if (currentWave == 2) {
-        // Aumenta un 50% los simultáneos de cada uno
-        targetBats = 45; // 30 * 1.5
-        targetSkeletons = 30; // 20 * 1.5
-        targetBrutes = 10; // 7 * 1.5 ≈ 10
+        targetBats = 32;
+        targetSkeletons = 20;
+        targetBrutes = 8;
       } else {
-        // Oleada 3+: Escala incorporando Magos Cultistas y Duendes Bomba
-        final waveBonus = (currentWave - 3) * 2;
-        targetBats = (38 + waveBonus).clamp(25, 45);
-        targetSkeletons = (25 + waveBonus).clamp(18, 32);
-        targetBrutes = (9 + (waveBonus ~/ 2)).clamp(6, 12);
-        targetCultists = (15 + waveBonus).clamp(10, 22);
-        targetBombers = (14 + waveBonus).clamp(10, 20);
+        // Oleada 3+: Escala equilibrada incorporando Magos Cultistas y Duendes Bomba
+        final waveBonus = (currentWave - 3);
+        targetBats = (26 + waveBonus).clamp(20, 30);
+        targetSkeletons = (18 + waveBonus).clamp(14, 22);
+        targetBrutes = (6 + (waveBonus ~/ 2)).clamp(4, 8);
+        targetCultists = (12 + waveBonus).clamp(8, 14);
+        targetBombers = (12 + waveBonus).clamp(8, 14);
       }
     }
 
@@ -457,7 +455,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   void spawnGem(Vector2 pos, GemType type, int value) {
     if (activeGems.length >= maxGems && activeGems.isNotEmpty) {
-      final oldest = activeGems.first;
+      final oldest = activeGems.removeAt(0);
       oldest.removeFromParent();
     }
     world.add(GemComponent(position: pos, type: type, value: value));
