@@ -21,82 +21,85 @@ class GameOverOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: const Color(0xFF10141E).withValues(alpha: 0.98),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFF2A4B).withValues(alpha: 0.7), width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFF2A4B).withValues(alpha: 0.3),
-              blurRadius: 24,
-              spreadRadius: 4,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.sentiment_very_dissatisfied, color: Color(0xFFFF2A4B), size: 54),
-            const SizedBox(height: 8),
-            const Text(
-              '¡FIN DE LA PARTIDA!',
-              style: TextStyle(
-                color: Color(0xFFFF2A4B),
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
+    return Material(
+      color: Colors.black.withValues(alpha: 0.75),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF10141E).withValues(alpha: 0.98),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFF2A4B).withValues(alpha: 0.7), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF2A4B).withValues(alpha: 0.3),
+                blurRadius: 24,
+                spreadRadius: 4,
               ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'El héroe ha caído en las sombras...',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-
-            // Tarjetas de estadísticas
-            _statRow('Tiempo Sobrevivido', _formatTime(game.elapsedTime.toInt()), Icons.timer),
-            _statRow('Enemigos Eliminados', '${game.enemiesSlain}', Icons.sports_kabaddi),
-            _statRow('Oleada Alcanzada', '${game.currentWave}', Icons.shield),
-            _statRow('Oro Guardado en BBDD', '+${game.goldEarned} monedas', Icons.monetization_on, isGold: true),
-            const SizedBox(height: 24),
-
-            // Botones de acción
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onReturnToMenu,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white70,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('MENÚ', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sentiment_very_dissatisfied, color: Color(0xFFFF2A4B), size: 54),
+              const SizedBox(height: 8),
+              const Text(
+                '¡FIN DE LA PARTIDA!',
+                style: TextStyle(
+                  color: Color(0xFFFF2A4B),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onRestart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2979FF),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 4,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'El héroe ha caído en las sombras...',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+
+              // Tarjetas de estadísticas
+              _statRow('Tiempo Sobrevivido', _formatTime(game.elapsedTime.toInt()), Icons.timer),
+              _statRow('Enemigos Eliminados', '${game.enemiesSlain}', Icons.sports_kabaddi),
+              _statRow('Oleada Alcanzada', '${game.currentWave}', Icons.shield),
+              _statRow('Oro Guardado en BBDD', '+${game.goldEarned} monedas', Icons.monetization_on, isGold: true),
+              const SizedBox(height: 24),
+
+              // Botones de acción
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onReturnToMenu,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('MENÚ', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                    child: const Text('REINTENTAR', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onRestart,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2979FF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 4,
+                      ),
+                      child: const Text('REINTENTAR', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

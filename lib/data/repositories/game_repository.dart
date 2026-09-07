@@ -1,4 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+import '../../core/log_manager.dart';
 import '../database/database.dart';
 
 class GameRepository {
@@ -61,43 +63,60 @@ class GameRepository {
     required int enemiesSlain,
     required int goldEarned,
     required int waveReached,
+    bool isVictory = false,
   }) async {
-    final profile = await getPlayerProfile();
+    try {
+      final profile = await getPlayerProfile();
 
-    await db.transaction(() async {
-      // Registrar en el historial local
-      await db.into(db.runHistories).insert(
-        RunHistoriesCompanion.insert(
-          score: score,
-          survivedSeconds: survivedSeconds,
-          enemiesSlain: enemiesSlain,
-          goldEarned: goldEarned,
-          waveReached: waveReached,
-        ),
-      );
+      await db.transaction(() async {
+        // Registrar en el historial local
+        await db.into(db.runHistories).insert(
+          RunHistoriesCompanion.insert(
+            score: score,
+            survivedSeconds: survivedSeconds,
+            enemiesSlain: enemiesSlain,
+            goldEarned: goldEarned,
+            waveReached: waveReached,
+          ),
+        );
 
-      // Sumar oro y estadísticas al perfil permanente
-      await (db.update(db.playerProfiles)..where((tbl) => tbl.id.equals(1))).write(
-        PlayerProfilesCompanion(
-          goldCoins: Value(profile.goldCoins + goldEarned),
-          totalKills: Value(profile.totalKills + enemiesSlain),
-          totalRuns: Value(profile.totalRuns + 1),
-          totalTimePlayedSeconds: Value(profile.totalTimePlayedSeconds + survivedSeconds),
-          lastLogin: Value(DateTime.now()),
-        ),
+        final newJourneyStage = isVictory ? (profile.journeyStage + 1) : profile.journeyStage;
+        final newCompletedRuns = isVictory ? (profile.completedRuns + 1) : profile.completedRuns;
+
+        // Sumar oro y estadísticas al perfil permanente de forma 100% atómica
+        await (db.update(db.playerProfiles)..where((tbl) => tbl.id.equals(1))).write(
+          PlayerProfilesCompanion(
+            goldCoins: Value(profile.goldCoins + goldEarned),
+            totalKills: Value(profile.totalKills + enemiesSlain),
+            totalRuns: Value(profile.totalRuns + 1),
+            totalTimePlayedSeconds: Value(profile.totalTimePlayedSeconds + survivedSeconds),
+            journeyStage: Value(newJourneyStage),
+            completedRuns: Value(newCompletedRuns),
+            lastLogin: Value(DateTime.now()),
+          ),
+        );
+      });
+      LogManager.log(
+        'GameRepository: Partida guardada en BBDD (Victoria: $isVictory, Etapa: ${isVictory ? profile.journeyStage + 1 : profile.journeyStage}, OroTotal: ${profile.goldCoins + goldEarned})',
       );
-    });
+    } catch (e, stack) {
+      LogManager.log('GameRepository ERROR al guardar partida: $e\n$stack');
+    }
   }
 
   Future<void> advanceJourneyStage({int bonusGold = 0}) async {
-    final profile = await getPlayerProfile();
-    await (db.update(db.playerProfiles)..where((tbl) => tbl.id.equals(1))).write(
-      PlayerProfilesCompanion(
-        journeyStage: Value(profile.journeyStage + 1),
-        completedRuns: Value(profile.completedRuns + 1),
-        goldCoins: Value(profile.goldCoins + bonusGold),
-      ),
-    );
+    try {
+      final profile = await getPlayerProfile();
+      await (db.update(db.playerProfiles)..where((tbl) => tbl.id.equals(1))).write(
+        PlayerProfilesCompanion(
+          journeyStage: Value(profile.journeyStage + 1),
+          completedRuns: Value(profile.completedRuns + 1),
+          goldCoins: Value(profile.goldCoins + bonusGold),
+        ),
+      );
+    } catch (e) {
+      debugPrint('GameRepository.advanceJourneyStage error: $e');
+    }
   }
 
   Future<List<RunHistory>> getHighScores() async {

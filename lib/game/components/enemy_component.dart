@@ -321,6 +321,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   @override
   void onLoad() {
     super.onLoad();
+    _specialTimer = _randomSeed % 2.2;
     final radius = isBoss ? 32.0 : (size.x * 0.4);
     _hitbox = CircleHitbox(radius: radius, anchor: Anchor.center, position: size / 2)..collisionType = CollisionType.passive;
     add(_hitbox);
@@ -367,19 +368,22 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   }
 
   void _handleSpecialAttacks(double dt, PlayerComponent player, double diffX, double diffY, double distSq) {
-    // 1. Mago Cultista (Disparo individual)
+    // 1. Mago Cultista (Disparo individual escalonado y con cupo)
     if (type == EnemyType.cultist) {
-      if (_specialTimer >= 2.4) {
+      if (_specialTimer >= 2.6) {
         _specialTimer = 0;
         if (distSq <= 460 * 460 && distSq > 45 * 45) {
-          AudioManager.playEnemyShoot();
-          final dir = Vector2(diffX, diffY).normalized();
-          game.world.add(EnemyBulletComponent(
-            position: position.clone(),
-            direction: dir,
-            speed: 210,
-            damage: 12,
-          ));
+          final activeEnemyBullets = game.world.children.whereType<EnemyBulletComponent>().length;
+          if (activeEnemyBullets < 16) {
+            AudioManager.playEnemyShoot();
+            final dir = Vector2(diffX, diffY).normalized();
+            game.world.add(EnemyBulletComponent(
+              position: position.clone(),
+              direction: dir,
+              speed: 210,
+              damage: 12,
+            ));
+          }
         }
       }
       return;
@@ -686,9 +690,18 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     }
     game.onEnemyKilled(this);
 
-    // Si es un Duende Bomba, explota con daño de área
+    // Si es un Duende Bomba, explota con daño de área (con límite de componentes visuales)
     if (type == EnemyType.bomber) {
-      game.world.add(ExplosionComponent(position: position.clone(), damage: 24));
+      final activeExplosions = game.world.children.whereType<ExplosionComponent>().length;
+      if (activeExplosions < 4) {
+        game.world.add(ExplosionComponent(position: position.clone(), damage: 24));
+      } else {
+        // Daño directo sin sobrecargar componentes visuales
+        final player = game.player;
+        if (player.isAlive && (player.position - position).length2 <= 65 * 65) {
+          player.takeDamage(24);
+        }
+      }
     }
 
     // Si es cualquier Jefe, recompensa legendaria masiva

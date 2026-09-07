@@ -108,9 +108,10 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   double elapsedTime = 0;
   int currentWave = 1;
 
-  // Temporizador de generación de enemigos
+  // Temporizador de generación de enemigos y heartbeat de diagnóstico
   double _spawnTimer = 0;
   double _spawnInterval = 2.0;
+  double _heartbeatTimer = 0;
 
   // Notificadores reactivos para los Overlays de Flutter
   final ValueNotifier<double> playerHpNotifier = ValueNotifier(100);
@@ -227,6 +228,17 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     elapsedTime += dt;
     timeSecondsNotifier.value = elapsedTime.toInt();
 
+    // Heartbeat diagnóstico cada 10 segundos en combate activo
+    _heartbeatTimer += dt;
+    if (_heartbeatTimer >= 10.0) {
+      _heartbeatTimer = 0;
+      LogManager.log(
+        'DungeonGame [Heartbeat]: Tiempo: ${elapsedTime.toInt()}s | Oleada: $currentWave | '
+        'Enemigos: ${activeEnemies.length}/$currentMaxEnemies | Gemas: ${activeGems.length} | '
+        'HP: ${player.hp.toInt()}/${player.maxHp.toInt()}',
+      );
+    }
+
     // Condición de Victoria en Modo Viaje:
     if (gameMode == 'journey' && !_isVictoryTriggered && targetDurationSeconds != null) {
       if (targetDurationSeconds! < 600) {
@@ -246,7 +258,11 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
 
     // Dificultad progresiva por oleadas (cada 45 segundos sube de oleada)
-    currentWave = (elapsedTime / 45).floor() + 1;
+    final newWave = (elapsedTime / 45).floor() + 1;
+    if (newWave != currentWave) {
+      currentWave = newWave;
+      LogManager.log('DungeonGame: ¡Comienza Oleada $currentWave a los ${elapsedTime.toInt()}s!');
+    }
 
     // Aceleración adaptativa de spawn para mantener los simultáneos requeridos
     final targetPopulation = !isNightmare
@@ -505,6 +521,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     if (_isVictoryTriggered || !player.isAlive) return;
     _isVictoryTriggered = true;
     isVictoryNotifier.value = true;
+    LogManager.log('DungeonGame: ¡¡¡VICTORIA ALCANZADA!!! Tiempo final: ${elapsedTime.toInt()}s. Guardando partida...');
 
     if (targetDurationSeconds == 180) {
       victoryBonusGold = 250;
@@ -519,11 +536,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     addGold(victoryBonusGold);
     AudioManager.playLevelUp();
     pauseEngine();
-    saveCurrentRun();
-
-    if (gameMode == 'journey') {
-      repository.advanceJourneyStage(bonusGold: victoryBonusGold);
-    }
+    saveCurrentRun(isVictory: true);
 
     overlays.add('Victory');
   }
@@ -597,7 +610,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   bool _runResultSaved = false;
 
-  void saveCurrentRun() {
+  void saveCurrentRun({bool isVictory = false}) {
     if (_runResultSaved) return;
     _runResultSaved = true;
     repository.saveRunResult(
@@ -606,14 +619,16 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       enemiesSlain: enemiesSlain,
       goldEarned: goldEarned,
       waveReached: currentWave,
+      isVictory: isVictory && gameMode == 'journey',
     );
   }
 
   void onGameOver() {
+    LogManager.log('DungeonGame: ¡¡¡GAME OVER!!! Héroe caído a los ${elapsedTime.toInt()}s (Oleada $currentWave). Guardando...');
     AudioManager.pauseBgm();
     AudioManager.playGameOver();
     pauseEngine();
-    saveCurrentRun();
+    saveCurrentRun(isVictory: false);
 
     overlays.add('GameOver');
   }

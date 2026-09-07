@@ -97,26 +97,28 @@ class AudioManager {
     sfxVolume = vol.clamp(0.0, 1.0);
   }
 
+  static int _lastGlobalSfxMs = 0;
+
   // --- EFECTOS DE SONIDO (SFX) ---
 
   static void playShoot() {
-    _play('shoot.wav', volume: 0.45, throttleMs: 140);
+    _play('shoot.wav', volume: 0.45, throttleMs: 180);
   }
 
   static void playHit() {
-    _play('hit.wav', volume: 0.55, throttleMs: 110);
+    _play('hit.wav', volume: 0.55, throttleMs: 240);
   }
 
   static void playGem() {
-    _play('gem.wav', volume: 0.65, throttleMs: 90);
+    _play('gem.wav', volume: 0.65, throttleMs: 160);
   }
 
   static void playLevelUp() {
-    _play('levelup.wav', volume: 0.9, throttleMs: 350);
+    _play('levelup.wav', volume: 0.9, throttleMs: 400);
   }
 
   static void playHurt() {
-    _play('hurt.wav', volume: 0.8, throttleMs: 300);
+    _play('hurt.wav', volume: 0.8, throttleMs: 350);
   }
 
   static void playGameOver() {
@@ -128,11 +130,11 @@ class AudioManager {
   }
 
   static void playExplosion() {
-    _play('explosion.wav', volume: 0.85, throttleMs: 150);
+    _play('explosion.wav', volume: 0.85, throttleMs: 300);
   }
 
   static void playEnemyShoot() {
-    _play('enemy_shoot.wav', volume: 0.5, throttleMs: 120);
+    _play('enemy_shoot.wav', volume: 0.5, throttleMs: 250);
   }
 
   static void playBossRoar() {
@@ -142,11 +144,18 @@ class AudioManager {
   static void _play(String fileName, {double volume = 1.0, int throttleMs = 80}) {
     if (isMuted || sfxVolume <= 0) return;
     final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Protección contra ráfagas de audio masivas en el mismo frame (mínimo 30ms entre cualquier SFX)
+    if (now - _lastGlobalSfxMs < 30) {
+      return;
+    }
+
     final last = _lastPlayedMs[fileName] ?? 0;
     if (now - last < throttleMs) {
       return;
     }
     _lastPlayedMs[fileName] = now;
+    _lastGlobalSfxMs = now;
 
     final effectiveVolume = (volume * sfxVolume).clamp(0.0, 1.0);
 
@@ -154,9 +163,10 @@ class AudioManager {
       final pool = _pools[fileName];
       if (pool != null) {
         pool.start(volume: effectiveVolume);
-      } else {
-        FlameAudio.play(fileName, volume: effectiveVolume);
       }
+      // NOTA CRÍTICA: NO invocar FlameAudio.play() si el pool está lleno;
+      // crear nuevos AudioPlayers en caliente en Android agota los handles nativos
+      // de MediaPlayerService provocando cierres silenciosos por SIGABRT.
     } catch (_) {}
   }
 }
