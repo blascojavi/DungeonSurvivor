@@ -173,23 +173,42 @@ class _HudOverlayState extends State<HudOverlay> with SingleTickerProviderStateM
                     ),
                     const SizedBox(width: 8),
 
-                    // Cronómetro de supervivencia
+                    // Cronómetro de supervivencia / Objetivo de misión
                     ValueListenableBuilder<int>(
                       valueListenable: game.timeSecondsNotifier,
                       builder: (context, seconds, _) {
+                        final isJourneyTimed = game.targetDurationSeconds != null;
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E2638).withValues(alpha: 0.8),
+                            color: const Color(0xFF1E2638).withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _formatTime(seconds),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                            border: Border.all(
+                              color: isJourneyTimed
+                                  ? const Color(0xFF00E5FF).withValues(alpha: 0.4)
+                                  : Colors.white10,
                             ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isJourneyTimed ? Icons.hourglass_top_rounded : Icons.timer,
+                                color: isJourneyTimed ? const Color(0xFF00E5FF) : Colors.white70,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isJourneyTimed
+                                    ? '${_formatTime(seconds)} / ${_formatTime(game.targetDurationSeconds!)}'
+                                    : _formatTime(seconds),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -217,68 +236,73 @@ class _HudOverlayState extends State<HudOverlay> with SingleTickerProviderStateM
                   ],
                 ),
 
-                // 2. Barra de Vida Épica del Jefe de Mazmorra (Solo visible cuando hay Jefe)
+                // 2. Barra de Vida Épica del Jefe de Mazmorra (Adaptada a los 6 Jefes Legendarios)
                 ValueListenableBuilder<bool>(
                   valueListenable: game.isBossAliveNotifier,
                   builder: (context, isBossAlive, _) {
                     if (!isBossAlive) return const SizedBox.shrink();
 
-                    return Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF14080B).withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFFF1744).withValues(alpha: 0.8), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFF1744).withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            spreadRadius: 2,
+                    return ValueListenableBuilder<Color>(
+                      valueListenable: game.bossAuraColorNotifier,
+                      builder: (context, auraColor, _) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF14080B).withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: auraColor.withValues(alpha: 0.85), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: auraColor.withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF5252), size: 16),
-                              const SizedBox(width: 6),
-                              ValueListenableBuilder<String>(
-                                valueListenable: game.bossNameNotifier,
-                                builder: (context, name, _) {
-                                  return Text(
-                                    name,
-                                    style: const TextStyle(
-                                      color: Color(0xFFFF5252),
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 12,
-                                      letterSpacing: 1.2,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.warning_amber_rounded, color: auraColor, size: 16),
+                                  const SizedBox(width: 6),
+                                  ValueListenableBuilder<String>(
+                                    valueListenable: game.bossNameNotifier,
+                                    builder: (context, name, _) {
+                                      return Text(
+                                        name,
+                                        style: TextStyle(
+                                          color: auraColor,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              ValueListenableBuilder<double>(
+                                valueListenable: game.bossHpNotifier,
+                                builder: (context, ratio, _) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: ratio,
+                                      minHeight: 12,
+                                      backgroundColor: const Color(0xFF2A0D13),
+                                      valueColor: AlwaysStoppedAnimation<Color>(auraColor),
                                     ),
                                   );
                                 },
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          ValueListenableBuilder<double>(
-                            valueListenable: game.bossHpNotifier,
-                            builder: (context, ratio, _) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: ratio,
-                                  minHeight: 12,
-                                  backgroundColor: const Color(0xFF2A0D13),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF1744)),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
                 ),

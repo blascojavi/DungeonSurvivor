@@ -8,12 +8,16 @@ import '../game/overlays/game_over_overlay.dart';
 import '../game/overlays/hud_overlay.dart';
 import '../game/overlays/level_up_overlay.dart';
 import '../game/overlays/pause_overlay.dart';
+import '../game/overlays/victory_overlay.dart';
 
 class GameScreen extends StatefulWidget {
   final GameRepository repository;
   final List<PermanentUpgrade> upgrades;
   final bool isLeftHanded;
   final String difficultyMode;
+  final String gameMode;
+  final int? targetDurationSeconds;
+  final int journeyStage;
 
   const GameScreen({
     super.key,
@@ -21,6 +25,9 @@ class GameScreen extends StatefulWidget {
     required this.upgrades,
     this.isLeftHanded = false,
     this.difficultyMode = 'nightmare',
+    this.gameMode = 'journey',
+    this.targetDurationSeconds,
+    this.journeyStage = 1,
   });
 
   @override
@@ -61,6 +68,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       activeUpgrades: widget.upgrades,
       isLeftHanded: widget.isLeftHanded,
       difficultyMode: widget.difficultyMode,
+      gameMode: widget.gameMode,
+      targetDurationSeconds: widget.targetDurationSeconds,
+      journeyStage: widget.journeyStage,
     );
   }
 
@@ -73,8 +83,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _pauseGame() {
     if (!mounted) return;
-    // Si no está en fin de partida, congelar el motor y mostrar pausa
-    if (!game.overlays.isActive('GameOver')) {
+    // Si no está en fin de partida o victoria, congelar el motor y mostrar pausa
+    if (!game.overlays.isActive('GameOver') && !game.overlays.isActive('Victory')) {
       if (!game.paused) {
         game.pauseEngine();
       }
@@ -88,8 +98,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _handleBackPress() {
-    // 1. Si la partida ya finalizó (GameOver), permitir salir directamente
-    if (game.overlays.isActive('GameOver')) {
+    // 1. Si la partida ya finalizó (GameOver o Victory), permitir salir directamente
+    if (game.overlays.isActive('GameOver') || game.overlays.isActive('Victory')) {
       Navigator.of(context).pop();
       return;
     }
@@ -186,6 +196,31 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   game: game,
                   onReturnToMenu: () => Navigator.of(context).pop(),
                   onRestart: _restartGame,
+                ),
+            'Victory': (context, game) => VictoryOverlay(
+                  game: game,
+                  onNextStage: () async {
+                    game.overlays.remove('Victory');
+                    final nextStage = widget.journeyStage + 1;
+                    final cyclePos = ((nextStage - 1) % 4) + 1;
+                    final duration = cyclePos == 4 ? 600 : (cyclePos % 2 == 1 ? 180 : 300);
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => GameScreen(
+                            repository: widget.repository,
+                            upgrades: widget.upgrades,
+                            isLeftHanded: widget.isLeftHanded,
+                            difficultyMode: widget.difficultyMode,
+                            gameMode: 'journey',
+                            journeyStage: nextStage,
+                            targetDurationSeconds: duration,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  onReturnToMenu: () => Navigator.of(context).pop(),
                 ),
             'Pause': (context, game) => PauseOverlay(
                   game: game,

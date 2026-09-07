@@ -91,6 +91,30 @@ class $PlayerProfilesTable extends PlayerProfiles
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _journeyStageMeta = const VerificationMeta(
+    'journeyStage',
+  );
+  @override
+  late final GeneratedColumn<int> journeyStage = GeneratedColumn<int>(
+    'journey_stage',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _completedRunsMeta = const VerificationMeta(
+    'completedRuns',
+  );
+  @override
+  late final GeneratedColumn<int> completedRuns = GeneratedColumn<int>(
+    'completed_runs',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -124,6 +148,8 @@ class $PlayerProfilesTable extends PlayerProfiles
     totalKills,
     totalRuns,
     totalTimePlayedSeconds,
+    journeyStage,
+    completedRuns,
     createdAt,
     lastLogin,
   ];
@@ -181,6 +207,24 @@ class $PlayerProfilesTable extends PlayerProfiles
         ),
       );
     }
+    if (data.containsKey('journey_stage')) {
+      context.handle(
+        _journeyStageMeta,
+        journeyStage.isAcceptableOrUnknown(
+          data['journey_stage']!,
+          _journeyStageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completed_runs')) {
+      context.handle(
+        _completedRunsMeta,
+        completedRuns.isAcceptableOrUnknown(
+          data['completed_runs']!,
+          _completedRunsMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -230,6 +274,14 @@ class $PlayerProfilesTable extends PlayerProfiles
         DriftSqlType.int,
         data['${effectivePrefix}total_time_played_seconds'],
       )!,
+      journeyStage: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}journey_stage'],
+      )!,
+      completedRuns: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completed_runs'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -255,6 +307,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
   final int totalKills;
   final int totalRuns;
   final int totalTimePlayedSeconds;
+  final int journeyStage;
+  final int completedRuns;
   final DateTime createdAt;
   final DateTime lastLogin;
   const PlayerProfile({
@@ -265,6 +319,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
     required this.totalKills,
     required this.totalRuns,
     required this.totalTimePlayedSeconds,
+    required this.journeyStage,
+    required this.completedRuns,
     required this.createdAt,
     required this.lastLogin,
   });
@@ -278,6 +334,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
     map['total_kills'] = Variable<int>(totalKills);
     map['total_runs'] = Variable<int>(totalRuns);
     map['total_time_played_seconds'] = Variable<int>(totalTimePlayedSeconds);
+    map['journey_stage'] = Variable<int>(journeyStage);
+    map['completed_runs'] = Variable<int>(completedRuns);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['last_login'] = Variable<DateTime>(lastLogin);
     return map;
@@ -292,6 +350,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
       totalKills: Value(totalKills),
       totalRuns: Value(totalRuns),
       totalTimePlayedSeconds: Value(totalTimePlayedSeconds),
+      journeyStage: Value(journeyStage),
+      completedRuns: Value(completedRuns),
       createdAt: Value(createdAt),
       lastLogin: Value(lastLogin),
     );
@@ -312,6 +372,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
       totalTimePlayedSeconds: serializer.fromJson<int>(
         json['totalTimePlayedSeconds'],
       ),
+      journeyStage: serializer.fromJson<int>(json['journeyStage']),
+      completedRuns: serializer.fromJson<int>(json['completedRuns']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       lastLogin: serializer.fromJson<DateTime>(json['lastLogin']),
     );
@@ -327,6 +389,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
       'totalKills': serializer.toJson<int>(totalKills),
       'totalRuns': serializer.toJson<int>(totalRuns),
       'totalTimePlayedSeconds': serializer.toJson<int>(totalTimePlayedSeconds),
+      'journeyStage': serializer.toJson<int>(journeyStage),
+      'completedRuns': serializer.toJson<int>(completedRuns),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'lastLogin': serializer.toJson<DateTime>(lastLogin),
     };
@@ -340,6 +404,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
     int? totalKills,
     int? totalRuns,
     int? totalTimePlayedSeconds,
+    int? journeyStage,
+    int? completedRuns,
     DateTime? createdAt,
     DateTime? lastLogin,
   }) => PlayerProfile(
@@ -351,6 +417,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
     totalRuns: totalRuns ?? this.totalRuns,
     totalTimePlayedSeconds:
         totalTimePlayedSeconds ?? this.totalTimePlayedSeconds,
+    journeyStage: journeyStage ?? this.journeyStage,
+    completedRuns: completedRuns ?? this.completedRuns,
     createdAt: createdAt ?? this.createdAt,
     lastLogin: lastLogin ?? this.lastLogin,
   );
@@ -369,6 +437,12 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
       totalTimePlayedSeconds: data.totalTimePlayedSeconds.present
           ? data.totalTimePlayedSeconds.value
           : this.totalTimePlayedSeconds,
+      journeyStage: data.journeyStage.present
+          ? data.journeyStage.value
+          : this.journeyStage,
+      completedRuns: data.completedRuns.present
+          ? data.completedRuns.value
+          : this.completedRuns,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       lastLogin: data.lastLogin.present ? data.lastLogin.value : this.lastLogin,
     );
@@ -384,6 +458,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
           ..write('totalKills: $totalKills, ')
           ..write('totalRuns: $totalRuns, ')
           ..write('totalTimePlayedSeconds: $totalTimePlayedSeconds, ')
+          ..write('journeyStage: $journeyStage, ')
+          ..write('completedRuns: $completedRuns, ')
           ..write('createdAt: $createdAt, ')
           ..write('lastLogin: $lastLogin')
           ..write(')'))
@@ -399,6 +475,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
     totalKills,
     totalRuns,
     totalTimePlayedSeconds,
+    journeyStage,
+    completedRuns,
     createdAt,
     lastLogin,
   );
@@ -413,6 +491,8 @@ class PlayerProfile extends DataClass implements Insertable<PlayerProfile> {
           other.totalKills == this.totalKills &&
           other.totalRuns == this.totalRuns &&
           other.totalTimePlayedSeconds == this.totalTimePlayedSeconds &&
+          other.journeyStage == this.journeyStage &&
+          other.completedRuns == this.completedRuns &&
           other.createdAt == this.createdAt &&
           other.lastLogin == this.lastLogin);
 }
@@ -425,6 +505,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
   final Value<int> totalKills;
   final Value<int> totalRuns;
   final Value<int> totalTimePlayedSeconds;
+  final Value<int> journeyStage;
+  final Value<int> completedRuns;
   final Value<DateTime> createdAt;
   final Value<DateTime> lastLogin;
   const PlayerProfilesCompanion({
@@ -435,6 +517,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
     this.totalKills = const Value.absent(),
     this.totalRuns = const Value.absent(),
     this.totalTimePlayedSeconds = const Value.absent(),
+    this.journeyStage = const Value.absent(),
+    this.completedRuns = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.lastLogin = const Value.absent(),
   });
@@ -446,6 +530,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
     this.totalKills = const Value.absent(),
     this.totalRuns = const Value.absent(),
     this.totalTimePlayedSeconds = const Value.absent(),
+    this.journeyStage = const Value.absent(),
+    this.completedRuns = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.lastLogin = const Value.absent(),
   });
@@ -457,6 +543,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
     Expression<int>? totalKills,
     Expression<int>? totalRuns,
     Expression<int>? totalTimePlayedSeconds,
+    Expression<int>? journeyStage,
+    Expression<int>? completedRuns,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? lastLogin,
   }) {
@@ -469,6 +557,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
       if (totalRuns != null) 'total_runs': totalRuns,
       if (totalTimePlayedSeconds != null)
         'total_time_played_seconds': totalTimePlayedSeconds,
+      if (journeyStage != null) 'journey_stage': journeyStage,
+      if (completedRuns != null) 'completed_runs': completedRuns,
       if (createdAt != null) 'created_at': createdAt,
       if (lastLogin != null) 'last_login': lastLogin,
     });
@@ -482,6 +572,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
     Value<int>? totalKills,
     Value<int>? totalRuns,
     Value<int>? totalTimePlayedSeconds,
+    Value<int>? journeyStage,
+    Value<int>? completedRuns,
     Value<DateTime>? createdAt,
     Value<DateTime>? lastLogin,
   }) {
@@ -494,6 +586,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
       totalRuns: totalRuns ?? this.totalRuns,
       totalTimePlayedSeconds:
           totalTimePlayedSeconds ?? this.totalTimePlayedSeconds,
+      journeyStage: journeyStage ?? this.journeyStage,
+      completedRuns: completedRuns ?? this.completedRuns,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
     );
@@ -525,6 +619,12 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
         totalTimePlayedSeconds.value,
       );
     }
+    if (journeyStage.present) {
+      map['journey_stage'] = Variable<int>(journeyStage.value);
+    }
+    if (completedRuns.present) {
+      map['completed_runs'] = Variable<int>(completedRuns.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -544,6 +644,8 @@ class PlayerProfilesCompanion extends UpdateCompanion<PlayerProfile> {
           ..write('totalKills: $totalKills, ')
           ..write('totalRuns: $totalRuns, ')
           ..write('totalTimePlayedSeconds: $totalTimePlayedSeconds, ')
+          ..write('journeyStage: $journeyStage, ')
+          ..write('completedRuns: $completedRuns, ')
           ..write('createdAt: $createdAt, ')
           ..write('lastLogin: $lastLogin')
           ..write(')'))
@@ -2105,6 +2207,8 @@ typedef $$PlayerProfilesTableCreateCompanionBuilder =
       Value<int> totalKills,
       Value<int> totalRuns,
       Value<int> totalTimePlayedSeconds,
+      Value<int> journeyStage,
+      Value<int> completedRuns,
       Value<DateTime> createdAt,
       Value<DateTime> lastLogin,
     });
@@ -2117,6 +2221,8 @@ typedef $$PlayerProfilesTableUpdateCompanionBuilder =
       Value<int> totalKills,
       Value<int> totalRuns,
       Value<int> totalTimePlayedSeconds,
+      Value<int> journeyStage,
+      Value<int> completedRuns,
       Value<DateTime> createdAt,
       Value<DateTime> lastLogin,
     });
@@ -2162,6 +2268,16 @@ class $$PlayerProfilesTableFilterComposer
 
   ColumnFilters<int> get totalTimePlayedSeconds => $composableBuilder(
     column: $table.totalTimePlayedSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get journeyStage => $composableBuilder(
+    column: $table.journeyStage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get completedRuns => $composableBuilder(
+    column: $table.completedRuns,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2220,6 +2336,16 @@ class $$PlayerProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get journeyStage => $composableBuilder(
+    column: $table.journeyStage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get completedRuns => $composableBuilder(
+    column: $table.completedRuns,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2264,6 +2390,16 @@ class $$PlayerProfilesTableAnnotationComposer
 
   GeneratedColumn<int> get totalTimePlayedSeconds => $composableBuilder(
     column: $table.totalTimePlayedSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get journeyStage => $composableBuilder(
+    column: $table.journeyStage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get completedRuns => $composableBuilder(
+    column: $table.completedRuns,
     builder: (column) => column,
   );
 
@@ -2314,6 +2450,8 @@ class $$PlayerProfilesTableTableManager
                 Value<int> totalKills = const Value.absent(),
                 Value<int> totalRuns = const Value.absent(),
                 Value<int> totalTimePlayedSeconds = const Value.absent(),
+                Value<int> journeyStage = const Value.absent(),
+                Value<int> completedRuns = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> lastLogin = const Value.absent(),
               }) => PlayerProfilesCompanion(
@@ -2324,6 +2462,8 @@ class $$PlayerProfilesTableTableManager
                 totalKills: totalKills,
                 totalRuns: totalRuns,
                 totalTimePlayedSeconds: totalTimePlayedSeconds,
+                journeyStage: journeyStage,
+                completedRuns: completedRuns,
                 createdAt: createdAt,
                 lastLogin: lastLogin,
               ),
@@ -2336,6 +2476,8 @@ class $$PlayerProfilesTableTableManager
                 Value<int> totalKills = const Value.absent(),
                 Value<int> totalRuns = const Value.absent(),
                 Value<int> totalTimePlayedSeconds = const Value.absent(),
+                Value<int> journeyStage = const Value.absent(),
+                Value<int> completedRuns = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> lastLogin = const Value.absent(),
               }) => PlayerProfilesCompanion.insert(
@@ -2346,6 +2488,8 @@ class $$PlayerProfilesTableTableManager
                 totalKills: totalKills,
                 totalRuns: totalRuns,
                 totalTimePlayedSeconds: totalTimePlayedSeconds,
+                journeyStage: journeyStage,
+                completedRuns: completedRuns,
                 createdAt: createdAt,
                 lastLogin: lastLogin,
               ),

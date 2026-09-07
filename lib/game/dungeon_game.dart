@@ -18,8 +18,13 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final List<PermanentUpgrade> activeUpgrades;
   final bool isLeftHanded;
   final String difficultyMode;
+  final String gameMode; // 'journey' or 'survivor'
+  final int? targetDurationSeconds; // 180, 300, 600, or null for endless
+  final int journeyStage; // current stage (1, 2, 3, 4...)
 
   bool get isNightmare => difficultyMode == 'nightmare';
+  bool get isBossMatch => targetDurationSeconds == 600 || (gameMode == 'journey' && journeyStage % 4 == 0);
+  int get chapter => ((journeyStage - 1) ~/ 4) + 1;
 
   late PlayerComponent player;
   late JoystickComponent joystick;
@@ -28,6 +33,28 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   final List<EnemyComponent> activeEnemies = [];
   final List<GemComponent> activeGems = [];
   int get currentMaxEnemies {
+    // Si hay un Jefe activo, la cantidad de esbirros se modula según la dificultad del jefe
+    final bossList = activeEnemies.where((e) => e.isBoss).toList();
+    if (bossList.isNotEmpty) {
+      final b = bossList.first;
+      switch (b.type) {
+        case EnemyType.bossIgnis:
+          // Jefe coloso sencillo: enjambre de esbirros secundario masivo
+          return isNightmare ? 85 : 40;
+        case EnemyType.bossGorgoroth:
+        case EnemyType.bossVespertina:
+          return isNightmare ? 60 : 30;
+        case EnemyType.bossValerius:
+          // Jefe mago táctico: guardia reducida
+          return isNightmare ? 35 : 18;
+        case EnemyType.bossXulkrag:
+          // Jefe abisal supremo: esbirros mínimos para favorecer duelo 1v1
+          return isNightmare ? 18 : 10;
+        case EnemyType.boss:
+        default:
+          return isNightmare ? 70 : 30;
+      }
+    }
     if (!isNightmare) return 32;
     if (currentWave == 1) return 70; // Mayor que 60 en Pesadilla
     if (currentWave == 2) return 95;
@@ -62,11 +89,17 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   final ValueNotifier<bool> isBossAliveNotifier = ValueNotifier(false);
   final ValueNotifier<String> bossNameNotifier = ValueNotifier('LORD MALAKOR - SEÑOR DEL ABISMO');
+  final ValueNotifier<Color> bossAuraColorNotifier = ValueNotifier(const Color(0xFFFF1744));
   final ValueNotifier<double> bossHpNotifier = ValueNotifier(1.0);
 
   // Notificadores para la Habilidad Definitiva (Ultimate)
   final ValueNotifier<double> ultimateChargeNotifier = ValueNotifier(0.0);
   final ValueNotifier<bool> isUltimateReadyNotifier = ValueNotifier(false);
+
+  // Notificadores de Victoria
+  bool _isVictoryTriggered = false;
+  final ValueNotifier<bool> isVictoryNotifier = ValueNotifier(false);
+  int victoryBonusGold = 0;
 
   // Estadísticas de la partida en curso
   int score = 0;
@@ -93,6 +126,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     required this.activeUpgrades,
     this.isLeftHanded = false,
     this.difficultyMode = 'nightmare',
+    this.gameMode = 'journey',
+    this.targetDurationSeconds,
+    this.journeyStage = 1,
   });
 
   @override
@@ -191,6 +227,24 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     elapsedTime += dt;
     timeSecondsNotifier.value = elapsedTime.toInt();
 
+    // Condición de Victoria en Modo Viaje:
+    if (gameMode == 'journey' && !_isVictoryTriggered && targetDurationSeconds != null) {
+      if (targetDurationSeconds! < 600) {
+        // Escaramuzas de 3 o 5 minutos: victoria épica al completar el tiempo
+        if (elapsedTime >= targetDurationSeconds!) {
+          triggerVictory();
+          return;
+        }
+      } else {
+        // Partida de Jefe de 10 minutos (600 s):
+        // Al minuto 8:00 (480 s), desatar el encuentro del Jefe Legendario del Capítulo
+        if (elapsedTime >= 480 && !_spawnedBossWaves.contains(999)) {
+          _spawnedBossWaves.add(999);
+          _spawnBossEncounter();
+        }
+      }
+    }
+
     // Dificultad progresiva por oleadas (cada 45 segundos sube de oleada)
     currentWave = (elapsedTime / 45).floor() + 1;
 
@@ -210,6 +264,39 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
   }
 
+  EnemyComponent _createBoss(int bossNumber, Vector2 position, double difficultyMultiplier) {
+    final bossIndex = (bossNumber - 1) % 6;
+    switch (bossIndex) {
+      case 0:
+        return EnemyComponent.bossIgnis(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+      case 1:
+        return EnemyComponent.bossGorgoroth(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+      case 2:
+        return EnemyComponent.bossVespertina(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+      case 3:
+        return EnemyComponent.bossValerius(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+      case 4:
+        return EnemyComponent.bossXulkrag(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+      case 5:
+      default:
+        return EnemyComponent.boss(position, difficultyMultiplier, bossSprite, isNightmare: isNightmare);
+    }
+  }
+
+  void _spawnBossEncounter({int bossCount = 1, int? customBossNumber}) {
+    final bossNumber = customBossNumber ?? chapter;
+    final bossDifficultyMultiplier = 1.0 + (currentWave - 1) * (isNightmare ? 0.16 : 0.10);
+    LogManager.log('DungeonGame: ¡Invocando Jefe (Tipo #$bossNumber, cantidad: $bossCount) en oleada $currentWave!');
+    for (int i = 0; i < bossCount; i++) {
+      final angle = (2 * pi / bossCount) * i + _random.nextDouble() * 0.3;
+      const spawnDistance = 560.0;
+      final pos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
+      pos.x = pos.x.clamp(60.0, DungeonMapComponent.mapWidth - 60.0);
+      pos.y = pos.y.clamp(60.0, DungeonMapComponent.mapHeight - 60.0);
+      world.add(_createBoss(bossNumber, pos, bossDifficultyMultiplier));
+    }
+  }
+
   Vector2 getRandomSpawnPosition() {
     final angle = _random.nextDouble() * 2 * pi;
     const spawnDistance = 540.0;
@@ -220,22 +307,15 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void _spawnEnemyWave() {
-    // Invocación del Jefe de Mazmorra en Oleadas múltiples de 5 (5, 10, 15, 20, 25...)
-    // A partir de la oleada 15, cada oleada de jefe posterior multiplica los jefes Malakor x2
-    if (currentWave >= 5 && currentWave % 5 == 0 && !_spawnedBossWaves.contains(currentWave)) {
-      _spawnedBossWaves.add(currentWave);
-      final bossCount = getBossCountForWave(currentWave);
-      final bossDifficultyMultiplier = 1.0 + (currentWave - 1) * 0.12;
-      LogManager.log('DungeonGame: ¡Invocando $bossCount Lord Malakor en oleada $currentWave!');
-      for (int i = 0; i < bossCount; i++) {
-        final angle = (2 * pi / bossCount) * i + _random.nextDouble() * 0.3;
-        const spawnDistance = 560.0;
-        final pos = player.position + Vector2(cos(angle), sin(angle)) * spawnDistance;
-        pos.x = pos.x.clamp(60.0, DungeonMapComponent.mapWidth - 60.0);
-        pos.y = pos.y.clamp(60.0, DungeonMapComponent.mapHeight - 60.0);
-        world.add(EnemyComponent.boss(pos, bossDifficultyMultiplier, bossSprite, isNightmare: isNightmare));
+    // Modo Supervivencia: Invocación de Jefes cíclicos cada 5 oleadas
+    if (gameMode == 'survivor') {
+      if (currentWave >= 5 && currentWave % 5 == 0 && !_spawnedBossWaves.contains(currentWave)) {
+        _spawnedBossWaves.add(currentWave);
+        final bossCount = getBossCountForWave(currentWave);
+        final bossNumber = (currentWave ~/ 5);
+        _spawnBossEncounter(bossCount: bossCount, customBossNumber: bossNumber);
+        return;
       }
-      return;
     }
 
     if (activeEnemies.length >= currentMaxEnemies) {
@@ -267,7 +347,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         case EnemyType.bomber:
           enemy = EnemyComponent.bomber(spawnPos, difficultyMultiplier, bomberSprite, isNightmare: isNightmare);
           break;
-        case EnemyType.boss:
+        default:
           enemy = EnemyComponent.bat(spawnPos, difficultyMultiplier, batSprite, isNightmare: isNightmare);
           break;
       }
@@ -300,7 +380,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         case EnemyType.bomber:
           bombers++;
           break;
-        case EnemyType.boss:
+        default:
           break;
       }
     }
@@ -384,8 +464,15 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void onEnemyKilled(EnemyComponent enemy) {
-    if (enemy.type == EnemyType.boss) {
-      LogManager.log('DungeonGame: ¡Lord Malakor ha sido derrotado en oleada $currentWave!');
+    if (enemy.isBoss) {
+      LogManager.log('DungeonGame: ¡${enemy.bossDisplayName} ha sido derrotado en oleada $currentWave!');
+      if (gameMode == 'journey' && isBossMatch) {
+        // Victoria si ya no quedan otros jefes vivos en la arena
+        final remainingBosses = activeEnemies.where((e) => e.isBoss && e != enemy).length;
+        if (remainingBosses == 0) {
+          triggerVictory();
+        }
+      }
     }
     enemiesSlain++;
     killsNotifier.value = enemiesSlain;
@@ -394,7 +481,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   }
 
   void updateBossHud() {
-    final bosses = activeEnemies.where((e) => e.type == EnemyType.boss).toList();
+    final bosses = activeEnemies.where((e) => e.isBoss).toList();
     if (bosses.isEmpty) {
       isBossAliveNotifier.value = false;
       bossHpNotifier.value = 0.0;
@@ -407,12 +494,40 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         totalMax += b.maxHp;
       }
       bossHpNotifier.value = (currentHp / totalMax).clamp(0.0, 1.0);
+      bossAuraColorNotifier.value = bosses.first.bossAuraColor;
       if (bosses.length == 1) {
-        bossNameNotifier.value = 'LORD MALAKOR - SEÑOR DEL ABISMO';
+        bossNameNotifier.value = bosses.first.bossDisplayName;
       } else {
-        bossNameNotifier.value = 'LORD MALAKOR x${bosses.length} - SEÑORES DEL ABISMO';
+        bossNameNotifier.value = '${bosses.first.bossDisplayName} x${bosses.length}';
       }
     }
+  }
+
+  void triggerVictory() {
+    if (_isVictoryTriggered || !player.isAlive) return;
+    _isVictoryTriggered = true;
+    isVictoryNotifier.value = true;
+
+    if (targetDurationSeconds == 180) {
+      victoryBonusGold = 250;
+    } else if (targetDurationSeconds == 300) {
+      victoryBonusGold = 450;
+    } else if (targetDurationSeconds == 600) {
+      victoryBonusGold = 1200;
+    } else {
+      victoryBonusGold = 350;
+    }
+
+    addGold(victoryBonusGold);
+    AudioManager.playLevelUp();
+    pauseEngine();
+    saveCurrentRun();
+
+    if (gameMode == 'journey') {
+      repository.advanceJourneyStage(bonusGold: victoryBonusGold);
+    }
+
+    overlays.add('Victory');
   }
 
   void onUltimateChargeChanged(double ratio) {

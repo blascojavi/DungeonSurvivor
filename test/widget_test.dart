@@ -23,7 +23,8 @@ void main() {
     await tester.pump();
 
     // Verificar que estamos en el Menú Principal
-    expect(find.text('ENTRAR A LA MAZMORRA'), findsOneWidget);
+    expect(find.textContaining('VIAJE DEL HÉROE'), findsAtLeastNWidgets(1));
+    expect(find.text('SUPERVIVENCIA INFINITA'), findsOneWidget);
     expect(find.text('TALLER DE MEJORAS'), findsOneWidget);
     expect(find.text('RÉCORDS Y ESTADÍSTICAS'), findsOneWidget);
     expect(find.text('AJUSTES Y DIFICULTAD'), findsOneWidget);

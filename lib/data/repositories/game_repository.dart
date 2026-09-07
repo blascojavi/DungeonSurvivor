@@ -89,6 +89,17 @@ class GameRepository {
     });
   }
 
+  Future<void> advanceJourneyStage({int bonusGold = 0}) async {
+    final profile = await getPlayerProfile();
+    await (db.update(db.playerProfiles)..where((tbl) => tbl.id.equals(1))).write(
+      PlayerProfilesCompanion(
+        journeyStage: Value(profile.journeyStage + 1),
+        completedRuns: Value(profile.completedRuns + 1),
+        goldCoins: Value(profile.goldCoins + bonusGold),
+      ),
+    );
+  }
+
   Future<List<RunHistory>> getHighScores() async {
     return (db.select(db.runHistories)
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.score)])

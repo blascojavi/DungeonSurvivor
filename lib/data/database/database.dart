@@ -16,6 +16,8 @@ class PlayerProfiles extends Table {
   IntColumn get totalKills => integer().withDefault(const Constant(0))();
   IntColumn get totalRuns => integer().withDefault(const Constant(0))();
   IntColumn get totalTimePlayedSeconds => integer().withDefault(const Constant(0))();
+  IntColumn get journeyStage => integer().withDefault(const Constant(1))();
+  IntColumn get completedRuns => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastLogin => dateTime().withDefault(currentDateAndTime)();
 }
@@ -64,7 +66,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting([QueryExecutor? executor]) : super(executor ?? NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -127,6 +129,10 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 3) {
           await m.addColumn(gameSettingsTable, gameSettingsTable.difficultyMode);
+        }
+        if (from < 4) {
+          await m.addColumn(playerProfiles, playerProfiles.journeyStage);
+          await m.addColumn(playerProfiles, playerProfiles.completedRuns);
         }
       },
     );

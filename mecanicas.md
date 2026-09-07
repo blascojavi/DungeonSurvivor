@@ -50,12 +50,17 @@ El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros p
 ### 3.1. Tipos de Enemigos y Bestiario
 | Monstruo | Vida Base | Velocidad | Daño Contacto | EXP | Probabilidad Oro | Comportamiento Especial |
 |---|:---:|:---:|:---:|:---:|:---:|---|
-| 🦇 **Murciélago Espectral** | **45 HP** | 100 px/s | 8 | 15 EXP | 25% | Muy rápido, ágil y agresivo. Embiste en bandadas masivas (25-35 simultáneos en Oleada 1). |
-| 💀 **Guerrero Esqueleto** | **65 HP** | 65 px/s | 14 | 30 EXP | 50% | Infantería no-muerta equilibrada con ojos dorados (15-25 simultáneos en Oleada 1). |
-| 👹 **Bruto Demoníaco** | **160 HP** | 40 px/s | 25 | 80 EXP | 90% | Minijefe tanque pesado, resiste muchos impactos y otorga gran oro (5-9 simultáneos en Oleada 1). |
-| 🔮 **Mago Cultista (Oleada 3+)** | **70 HP** | 55 px/s | 12 | 40 EXP | 40% | Guarda distancia media y dispara orbes mágicos oscuros cada 2.5s. |
-| 💣 **Duende Bomba (Oleada 3+)** | **55 HP** | 130 px/s | 10 | 25 EXP | 35% | Corre frenéticamente con una bomba y estalla al morir dañando en área. |
-| 👑 **Lord Malakor - Señor del Abismo (Jefe)** | **780 HP** | 45 px/s | 30 | 350 EXP | 100% | Colosal demonio acorazado con cuernos ardientes. Lanza ráfagas triples de proyectiles en abanico. ¡A partir de la oleada 15 se duplica en cada aparición (x2)! |
+| 🦇 **Murciélago Espectral** | **45 HP** | 100 px/s | 8 | 15 EXP | 25% | Muy rápido y ágil. En Pesadilla realiza trayectorias de vuelo senoidales envolventes para flanquear al héroe. |
+| 💀 **Guerrero Esqueleto** | **65 HP** | 65 px/s | 14 | 30 EXP | 50% | Infantería no-muerta. En Pesadilla ataca en formación de pinza angular en lugar de línea recta. |
+| 👹 **Bruto Demoníaco** | **160 HP** | 40 px/s | 25 | 80 EXP | 90% | Minijefe tanque pesado. En Pesadilla realiza una violenta embestida de carga rápida cuando entra en rango medio. |
+| 🔮 **Mago Cultista (Oleada 3+)** | **70 HP** | 55 px/s | 12 | 40 EXP | 40% | Guarda distancia media orbitando al héroe y dispara orbes mágicos oscuros cada 2.5s. |
+| 💣 **Duende Bomba (Oleada 3+)** | **55 HP** | 130 px/s | 10 | 25 EXP | 35% | Corre frenéticamente con una bomba. En Pesadilla acelera al acercarse y estalla al morir dañando en área. |
+| 🔥 **Ignis - Coloso de Ceniza (Jefe 1)** | **750 HP** | 52 px/s | 28 | 320 EXP | 100% | Aura de fuego incandescente. Ruge y ejecuta embestidas ígneas de carga rápida. Convoca densos enjambres secundarios (hasta 85 esbirros). |
+| 🦴 **Gorgoroth - Titán de Hueso (Jefe 2)** | **920 HP** | 38 px/s | 34 | 400 EXP | 100% | Aura verde necrótica. Golpea el suelo desatando un anillo de 12 proyectiles óseos en 360°. Horda secundaria equilibrada (60 esbirros). |
+| 🕷️ **Vespertina - Matriarca (Jefe 3)** | **860 HP** | 48 px/s | 30 | 380 EXP | 100% | Aura violeta quimérica. Dispara ráfagas espirales continuas de proyectiles venenosos. Horda secundaria equilibrada (60 esbirros). |
+| 🔮 **Archimago Valerius (Jefe 4)** | **680 HP** | 60 px/s | 32 | 420 EXP | 100% | Aura azul arcana. Se teletransporta tácticamente cada 4 segundos disparando 4 orbes concentrados. Guardia reducida (35 esbirros). |
+| 🌌 **Xul'Krag - Devorador (Jefe 5)** | **1100 HP** | 42 px/s | 36 | 500 EXP | 100% | Aura carmesí abisal. Desata un vórtice gravitatorio que arrastra al héroe hacia su centro + doble disparo oscuro. Duelo intenso con esbirros mínimos (18 esbirros). |
+| 👑 **Lord Malakor - Señor del Abismo (Jefe 6)** | **1000 HP** | 46 px/s | 32 | 450 EXP | 100% | Aura cian abisal. Ráfagas triples en abanico y estado de Enrage (+40% velocidad y cadencia) al caer por debajo del 30% de vida. |
 
 ### 3.2. Límites Simultáneos y Progresión por Oleadas
 - **Límite Mínimo y Máximo Dinámico (`maxEnemies`):**
@@ -88,7 +93,31 @@ El juego transcurre en una arena cerrada de **1600 x 1600 píxeles** con muros p
 
 ---
 
-## 5. Cronograma de Oleadas y Aparición de Enemigos
+## 5. Modos de Juego: El Viaje del Héroe vs Supervivencia Infinita
+
+### 5.1. El Viaje del Héroe (Hero's Journey)
+A diferencia de un bucle sin fin, este modo estructura la aventura en **capítulos de 4 etapas finitas con victoria alcanzable**, otorgando la ansiada subida de endorfinas por haber ganado y progresado:
+- **Estructura Cíclica:**
+  - **Etapa 1:** Escaramuza corta (3 minutos / 180 s). Bonificación: +250 oro.
+  - **Etapa 2:** Escaramuza media (5 minutos / 300 s). Bonificación: +450 oro.
+  - **Etapa 3:** Escaramuza táctica (3 minutos / 180 s). Bonificación: +250 oro.
+  - **Etapa 4 (Encuentro de Jefe):** Partida épica de **10 minutos (600 s)** culminando con el despertar del Jefe Legendario del Capítulo al minuto 8:00. La victoria se desata al abatir al Jefe. Bonificación: **+1200 oro**.
+- **Progresión de Capítulos y Jefes:**
+  - **Capítulo 1 (Etapa 4):** 🔥 *Ignis - El Coloso de Ceniza*
+  - **Capítulo 2 (Etapa 8):** 🦴 *Gorgoroth - Titán de Hueso*
+  - **Capítulo 3 (Etapa 12):** 🕷️ *Vespertina - Matriarca del Enjambre*
+  - **Capítulo 4 (Etapa 16):** 🔮 *Archimago Valerius - El Hereje*
+  - **Capítulo 5 (Etapa 20):** 🌌 *Xul'Krag - Devorador de Sombras*
+  - **Capítulo 6 (Etapa 24):** 👑 *Lord Malakor - Señor del Abismo*
+- **Pantalla de Victoria Triunfal:** Al completar el objetivo, se pausa el motor y se presenta la pantalla de Victoria dorada con resumen de bajas, oro ganado y botón para avanzar a la siguiente etapa o volver al menú.
+
+### 5.2. Modo Supervivencia Infinita (Survivor)
+- Partida ilimitada clásica orientada a récords de puntuación máxima y tiempo de aguante extremo.
+- Los 6 Jefes Legendarios rotan cíclicamente cada 5 oleadas (Oleada 5, 10, 15...). A partir de la oleada 15, la multiplicación x2 pone a prueba la maestría del jugador.
+
+---
+
+## 6. Cronograma de Oleadas y Aparición de Enemigos
 
 Cada oleada de la mazmorra dura exactamente **45 segundos** de tiempo real:
 
