@@ -586,7 +586,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         player.attackInterval = (player.attackInterval * 0.82).clamp(0.12, 1.0);
         break;
       case 'speed':
-        player.speed *= 1.15;
+        player.speed *= 1.05;
         break;
       case 'heal_and_health':
         player.maxHp += 25;
