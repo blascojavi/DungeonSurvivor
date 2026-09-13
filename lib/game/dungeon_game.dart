@@ -32,6 +32,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   // Pools controlados para máximo rendimiento
   final List<EnemyComponent> activeEnemies = [];
   final List<GemComponent> activeGems = [];
+  int activeEnemyBulletsCount = 0;
+  int activeExplosionsCount = 0;
+
   int get currentMaxEnemies {
     // Si hay un Jefe activo, la cantidad de esbirros se modula según la dificultad del jefe
     final bossList = activeEnemies.where((e) => e.isBoss).toList();
@@ -40,25 +43,25 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
       switch (b.type) {
         case EnemyType.bossIgnis:
           // Jefe coloso sencillo: enjambre de esbirros secundario controlado
-          return isNightmare ? 55 : 35;
+          return isNightmare ? 40 : 30;
         case EnemyType.bossGorgoroth:
         case EnemyType.bossVespertina:
-          return isNightmare ? 45 : 28;
+          return isNightmare ? 35 : 25;
         case EnemyType.bossValerius:
           // Jefe mago táctico: guardia reducida
-          return isNightmare ? 28 : 16;
+          return isNightmare ? 24 : 16;
         case EnemyType.bossXulkrag:
           // Jefe abisal supremo: esbirros mínimos para favorecer duelo 1v1
           return isNightmare ? 14 : 10;
         case EnemyType.boss:
         default:
-          return isNightmare ? 50 : 25;
+          return isNightmare ? 38 : 25;
       }
     }
     if (!isNightmare) return 32;
-    if (currentWave == 1) return 50;
-    if (currentWave == 2) return 65;
-    return (65 + (currentWave - 2) * 5).clamp(65, 80);
+    if (currentWave == 1) return 40;
+    if (currentWave == 2) return 46;
+    return (46 + (currentWave - 2) * 3).clamp(46, 52);
   }
   static const int maxGems = 64;
   static final Random _random = Random();
@@ -216,7 +219,9 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
 
   @override
   void update(double dt) {
-    super.update(dt);
+    // Protección vital contra picos de tiempo acumulado tras pausas o caídas de frames (máx 35ms por tick)
+    final safeDt = dt.clamp(0.0, 0.035);
+    super.update(safeDt);
     if (!player.isAlive || paused) return;
 
     // Actualizar movimiento del jugador desde el joystick
@@ -225,11 +230,11 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
 
     // Temporizador de supervivencia
-    elapsedTime += dt;
+    elapsedTime += safeDt;
     timeSecondsNotifier.value = elapsedTime.toInt();
 
     // Heartbeat diagnóstico cada 10 segundos en combate activo
-    _heartbeatTimer += dt;
+    _heartbeatTimer += safeDt;
     if (_heartbeatTimer >= 10.0) {
       _heartbeatTimer = 0;
       LogManager.log(
@@ -267,7 +272,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     // Aceleración adaptativa de spawn para mantener los simultáneos requeridos
     final targetPopulation = !isNightmare
         ? (currentWave == 1 ? 20 : (currentWave == 2 ? 28 : 32))
-        : (currentWave == 1 ? 45 : (currentWave == 2 ? 60 : 75));
+        : (currentWave == 1 ? 35 : (currentWave == 2 ? 42 : 48));
     if (activeEnemies.length < targetPopulation * 0.75) {
       _spawnInterval = 0.22; // Inundación rápida hasta llenar la arena
     } else {
@@ -275,7 +280,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     }
 
     // Generador de oleadas de enemigos
-    _spawnTimer += dt;
+    _spawnTimer += safeDt;
     if (_spawnTimer >= _spawnInterval) {
       _spawnTimer = 0;
       _spawnEnemyWave();
@@ -428,23 +433,23 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         targetBombers = (4 + waveBonus).clamp(3, 7);
       }
     } else {
-      // Modo Pesadilla: hordas brutales masivas
+      // Modo Pesadilla: hordas brutales masivas pero balanceadas para 60 FPS
       if (currentWave == 1) {
+        targetBats = 22;
+        targetSkeletons = 14;
+        targetBrutes = 4;
+      } else if (currentWave == 2) {
         targetBats = 24;
         targetSkeletons = 16;
-        targetBrutes = 5;
-      } else if (currentWave == 2) {
-        targetBats = 32;
-        targetSkeletons = 20;
-        targetBrutes = 8;
+        targetBrutes = 6;
       } else {
         // Oleada 3+: Escala equilibrada incorporando Magos Cultistas y Duendes Bomba
         final waveBonus = (currentWave - 3);
-        targetBats = (26 + waveBonus).clamp(20, 30);
-        targetSkeletons = (18 + waveBonus).clamp(14, 22);
-        targetBrutes = (6 + (waveBonus ~/ 2)).clamp(4, 8);
-        targetCultists = (12 + waveBonus).clamp(8, 14);
-        targetBombers = (12 + waveBonus).clamp(8, 14);
+        targetBats = (20 + waveBonus).clamp(16, 24);
+        targetSkeletons = (14 + waveBonus).clamp(10, 18);
+        targetBrutes = (5 + (waveBonus ~/ 2)).clamp(3, 6);
+        targetCultists = (5 + waveBonus).clamp(4, 6);
+        targetBombers = (5 + waveBonus).clamp(4, 6);
       }
     }
 
@@ -572,7 +577,11 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     if (!overlays.isActive('LevelUp')) {
       AudioManager.playLevelUp();
       pauseEngine();
-      overlays.add('LevelUp');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!overlays.isActive('LevelUp')) {
+          overlays.add('LevelUp');
+        }
+      });
     }
   }
 
@@ -586,7 +595,7 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
         player.attackInterval = (player.attackInterval * 0.82).clamp(0.12, 1.0);
         break;
       case 'speed':
-        player.speed *= 1.05;
+        player.speed *= 1.025;
         break;
       case 'heal_and_health':
         player.maxHp += 25;
@@ -601,8 +610,10 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     if (pendingLevelUps <= 0) {
       pendingLevelUps = 0;
       overlays.remove('LevelUp');
-      resumeEngine();
-      LogManager.log('DungeonGame: Todas las mejoras aplicadas. Motor reanudado.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        resumeEngine();
+        LogManager.log('DungeonGame: Todas las mejoras aplicadas. Motor reanudado limpiamente.');
+      });
     } else {
       LogManager.log('DungeonGame: Quedan $pendingLevelUps mejoras pendientes por elegir.');
     }
@@ -630,7 +641,11 @@ class DungeonGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
     pauseEngine();
     saveCurrentRun(isVictory: false);
 
-    overlays.add('GameOver');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!overlays.isActive('GameOver')) {
+        overlays.add('GameOver');
+      }
+    });
   }
 
   @override

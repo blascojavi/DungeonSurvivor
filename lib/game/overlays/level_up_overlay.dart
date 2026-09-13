@@ -49,7 +49,7 @@ class _LevelUpOverlayState extends State<LevelUpOverlay> {
     SkillCard(
       id: 'speed',
       title: 'Pies Alados',
-      description: '+5% de Velocidad de Movimiento del héroe',
+      description: '+2.5% de Velocidad de Movimiento del héroe',
       icon: Icons.directions_run,
       color: const Color(0xFF00E5FF),
     ),

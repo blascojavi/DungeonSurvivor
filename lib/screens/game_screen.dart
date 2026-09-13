@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../core/audio_manager.dart';
+import '../core/log_manager.dart';
 import '../data/database/database.dart';
 import '../data/repositories/game_repository.dart';
 import '../game/dungeon_game.dart';
@@ -75,6 +76,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _restartGame() {
+    LogManager.log('GameScreen: Reiniciando partida por reintento del jugador...');
     setState(() {
       _gameKeyCounter++;
       _initGame();

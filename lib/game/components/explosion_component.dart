@@ -25,7 +25,14 @@ class ExplosionComponent extends PositionComponent with HasGameReference<Dungeon
   @override
   void onMount() {
     super.onMount();
+    game.activeExplosionsCount++;
     AudioManager.playExplosion();
+  }
+
+  @override
+  void onRemove() {
+    game.activeExplosionsCount = (game.activeExplosionsCount - 1).clamp(0, 999);
+    super.onRemove();
   }
 
   @override

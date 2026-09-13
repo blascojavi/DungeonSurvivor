@@ -23,11 +23,32 @@ class GameRepository {
   }
 
   Stream<List<PermanentUpgrade>> watchUpgrades() {
+    _ensureUpgradesSynced();
     return db.select(db.permanentUpgrades).watch();
   }
 
-  Future<List<PermanentUpgrade>> getUpgrades() {
+  Future<List<PermanentUpgrade>> getUpgrades() async {
+    await _ensureUpgradesSynced();
     return db.select(db.permanentUpgrades).get();
+  }
+
+  bool _upgradesSynced = false;
+  Future<void> _ensureUpgradesSynced() async {
+    if (_upgradesSynced) return;
+    _upgradesSynced = true;
+    try {
+      final list = await db.select(db.permanentUpgrades).get();
+      for (final u in list) {
+        if (u.upgradeId == 'move_speed' && (u.bonusPerLevel > 0.03 || u.description.contains('5%'))) {
+          await (db.update(db.permanentUpgrades)..where((tbl) => tbl.upgradeId.equals('move_speed'))).write(
+            const PermanentUpgradesCompanion(
+              bonusPerLevel: Value(0.025),
+              description: Value('+2.5% de velocidad de movimiento por nivel'),
+            ),
+          );
+        }
+      }
+    } catch (_) {}
   }
 
   Future<bool> purchaseUpgrade(PermanentUpgrade upgrade) async {

@@ -1,9 +1,10 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../dungeon_game.dart';
 import 'player_component.dart';
 
-class EnemyBulletComponent extends PositionComponent with CollisionCallbacks {
+class EnemyBulletComponent extends PositionComponent with CollisionCallbacks, HasGameReference<DungeonGame> {
   final Vector2 direction;
   final double speed;
   final double damage;
@@ -25,6 +26,18 @@ class EnemyBulletComponent extends PositionComponent with CollisionCallbacks {
           size: Vector2(12, 12),
           anchor: Anchor.center,
         );
+
+  @override
+  void onMount() {
+    super.onMount();
+    game.activeEnemyBulletsCount++;
+  }
+
+  @override
+  void onRemove() {
+    game.activeEnemyBulletsCount = (game.activeEnemyBulletsCount - 1).clamp(0, 999);
+    super.onRemove();
+  }
 
   @override
   Future<void> onLoad() async {

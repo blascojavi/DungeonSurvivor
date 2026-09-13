@@ -145,8 +145,8 @@ class AudioManager {
     if (isMuted || sfxVolume <= 0) return;
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Protección contra ráfagas de audio masivas en el mismo frame (mínimo 30ms entre cualquier SFX)
-    if (now - _lastGlobalSfxMs < 30) {
+    // Protección contra ráfagas de audio masivas en el mismo frame (mínimo 45ms entre cualquier SFX)
+    if (now - _lastGlobalSfxMs < 45) {
       return;
     }
 

@@ -66,7 +66,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting([QueryExecutor? executor]) : super(executor ?? NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -108,9 +108,9 @@ class AppDatabase extends _$AppDatabase {
           PermanentUpgradesCompanion.insert(
             upgradeId: 'move_speed',
             name: 'Pies Alados',
-            description: '+5% de velocidad de movimiento por nivel',
+            description: '+2.5% de velocidad de movimiento por nivel',
             baseCost: 120,
-            bonusPerLevel: 0.05,
+            bonusPerLevel: 0.025,
           ),
         );
         await into(permanentUpgrades).insert(
@@ -133,6 +133,14 @@ class AppDatabase extends _$AppDatabase {
         if (from < 4) {
           await m.addColumn(playerProfiles, playerProfiles.journeyStage);
           await m.addColumn(playerProfiles, playerProfiles.completedRuns);
+        }
+        if (from < 5) {
+          await (update(permanentUpgrades)..where((tbl) => tbl.upgradeId.equals('move_speed'))).write(
+            const PermanentUpgradesCompanion(
+              bonusPerLevel: Value(0.025),
+              description: Value('+2.5% de velocidad de movimiento por nivel'),
+            ),
+          );
         }
       },
     );

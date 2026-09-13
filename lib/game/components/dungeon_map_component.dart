@@ -50,8 +50,8 @@ class DungeonMapComponent extends PositionComponent with HasGameReference<Dungeo
       }
     }
 
-    // 3. Tinte atmosférico para mazmorra oscura (Dark Fantasy Ambient Tint)
-    final tintPaint = Paint()..color = const Color(0x33000511);
+    // 3. Tinte atmosférico para mazmorra oscura (Dark Fantasy Ambient Tint sutil para óptimo contraste de enemigos)
+    final tintPaint = Paint()..color = const Color(0x14000511);
     canvas.drawRect(const Rect.fromLTWH(0, 0, mapWidth, mapHeight), tintPaint);
 
     // 4. Gran Sello Arcano Rúnico Sangriento en el centro de la mazmorra

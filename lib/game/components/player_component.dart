@@ -29,6 +29,9 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   static final Paint _auraPaint = Paint()..color = const Color(0x3300E5FF);
   static final Paint _fallbackPaint = Paint()..color = const Color(0xFF2979FF);
+  static final Paint _shadowPaint = Paint()
+    ..color = const Color(0x55000000)
+    ..style = PaintingStyle.fill;
 
   PlayerComponent({
     required Vector2 position,
@@ -136,6 +139,13 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     }
 
     super.render(canvas);
+
+    // Sombra del héroe en sus pies para anclarlo a la arena
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(size.x / 2, size.y - 2), width: size.x * 0.75, height: 7.0),
+      _shadowPaint,
+    );
+
     final center = Offset(size.x / 2, size.y / 2);
 
     // Halo ligero sin desenfoque costoso

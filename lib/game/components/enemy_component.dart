@@ -53,6 +53,9 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
     ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcATop);
   static final Paint _barBg = Paint()..color = Colors.black54;
   static final Paint _barHp = Paint()..color = const Color(0xFFFF5252);
+  static final Paint _shadowPaint = Paint()
+    ..color = const Color(0x55000000)
+    ..style = PaintingStyle.fill;
 
   bool get isBoss =>
       type == EnemyType.boss ||
@@ -373,8 +376,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
       if (_specialTimer >= 2.6) {
         _specialTimer = 0;
         if (distSq <= 460 * 460 && distSq > 45 * 45) {
-          final activeEnemyBullets = game.world.children.whereType<EnemyBulletComponent>().length;
-          if (activeEnemyBullets < 16) {
+          if (game.activeEnemyBulletsCount < 8) {
             AudioManager.playEnemyShoot();
             final dir = Vector2(diffX, diffY).normalized();
             game.world.add(EnemyBulletComponent(
@@ -628,7 +630,19 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Aura distintiva luminosa para los Jefes
+    // 1. Sombra proyectada sutil en el suelo (da profundidad y separa las capas visuales)
+    final isFlying = type == EnemyType.bat;
+    final shadowCenter = isFlying
+        ? Offset(size.x / 2, size.y + 4)
+        : Offset(size.x / 2, size.y - 2);
+    final shadowWidth = isFlying ? size.x * 0.70 : size.x * 0.85;
+    final shadowHeight = isFlying ? 5.5 : (isBoss ? 12.0 : 7.0);
+    canvas.drawOval(
+      Rect.fromCenter(center: shadowCenter, width: shadowWidth, height: shadowHeight),
+      _shadowPaint,
+    );
+
+    // 2. Aura distintiva luminosa para los Jefes
     if (isBoss) {
       final auraPaint = Paint()
         ..color = bossAuraColor.withValues(alpha: 0.3)
@@ -692,8 +706,7 @@ class EnemyComponent extends PositionComponent with CollisionCallbacks, HasGameR
 
     // Si es un Duende Bomba, explota con daño de área (con límite de componentes visuales)
     if (type == EnemyType.bomber) {
-      final activeExplosions = game.world.children.whereType<ExplosionComponent>().length;
-      if (activeExplosions < 4) {
+      if (game.activeExplosionsCount < 3) {
         game.world.add(ExplosionComponent(position: position.clone(), damage: 24));
       } else {
         // Daño directo sin sobrecargar componentes visuales
